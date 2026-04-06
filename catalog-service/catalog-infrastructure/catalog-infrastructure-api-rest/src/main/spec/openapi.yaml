@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: Catálogo API
+  version: 1.0.0
+  description: API for catalog entities (países, comunidades autónomas, provincias, localidades, tipos de vía)
+paths:
+  /paises:
+    $ref: './paises/paths.yaml#/paths/~1paises'
+  /paises/{id}:
+    $ref: './paises/paths.yaml#/paths/~1paises~1{id}'
+  /comunidades:
+    $ref: './comunidades/paths.yaml#/paths/~1comunidades'
+  /comunidades/{id}:
+    $ref: './comunidades/paths.yaml#/paths/~1comunidades~1{id}'
+  /provincias:
+    $ref: './provincias/paths.yaml#/paths/~1provincias'
+  /provincias/{id}:
+    $ref: './provincias/paths.yaml#/paths/~1provincias~1{id}'
+  /localidades:
+    $ref: './localidades/paths.yaml#/paths/~1localidades'
+  /localidades/{id}:
+    $ref: './localidades/paths.yaml#/paths/~1localidades~1{id}'
+  /tipos-via:
+    $ref: './tipos-via/paths.yaml#/paths/~1tipos-via'
+  /tipos-via/{id}:
+    $ref: './tipos-via/paths.yaml#/paths/~1tipos-via~1{id}'
+components:
+  schemas:
+    ProblemDetail:
+      $ref: './components/problem-detail.yaml#/ProblemDetail'
+    PageResult:
+      $ref: './components/pagination.yaml#/PageResult'

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="101-load-comunidad-autonoma-data" author="liquibase" labels="data,dml">
+        <comment>Carga inicial de comunidades autónomas desde archivo CSV</comment>
+        
+        <loadData file="./data/comunidades-autonomas.csv" 
+                  tableName="COMUNIDAD_AUTONOMA"
+                  separator=","
+                  quotchar="&quot;"
+                  encoding="UTF-8">
+            <column name="ID" type="STRING"/>
+            <column name="DENOMINACION" type="STRING"/>
+            <column name="RCP" type="STRING"/>
+            <column name="DIR2" type="STRING"/>
+        </loadData>
+        
+        <rollback>
+            <delete tableName="COMUNIDAD_AUTONOMA"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

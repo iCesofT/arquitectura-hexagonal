@@ -1,0 +1,28 @@
+ComunidadResumen:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Código INE de la Comunidad Autónoma
+    nombre:
+      type: string
+      description: Denominación de la Comunidad Autónoma
+  required: [id, nombre]
+
+ComunidadDetalle:
+  allOf:
+    - $ref: '#/ComunidadResumen'
+    - type: object
+      properties:
+        rcp:
+          type: string
+          description: Código RCP de la Comunidad Autónoma
+        dir2:
+          type: string
+          description: Código DIR2 de la Comunidad Autónoma
+        provincias:
+          type: array
+          description: Lista de Provincias pertenecientes a la Comunidad Autónoma
+          items:
+            $ref: '../provincias/entities.yaml#/ProvinciaResumen'
+  required: [id, nombre, rcp, dir2, provincias]

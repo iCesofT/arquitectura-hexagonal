@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package io.github.icesoft.catalog.infrastructure.api.grpc;
+
+option java_multiple_files = true;
+option java_package = "io.github.icesoft.catalog.infrastructure.api.grpc";
+
+message ComunidadResumen {
+  string id = 1;
+  string nombre = 2;
+}
+
+message ProvinciaResumen {
+  string id = 1;
+  string nombre = 2;
+}
+

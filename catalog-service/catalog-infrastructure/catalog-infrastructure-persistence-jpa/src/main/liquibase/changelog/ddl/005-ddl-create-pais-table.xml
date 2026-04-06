@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="005-create-pais-table" author="liquibase" labels="ddl">
+        <comment>Create PAIS table for countries</comment>
+        
+        <createTable tableName="PAIS">
+            <column name="ID" type="VARCHAR(3)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ALFA3" type="VARCHAR(3)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="ALFA2" type="VARCHAR(2)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="DENOMINACION" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create unique indexes -->
+        <createIndex indexName="UK_PAIS_ALFA3" tableName="PAIS">
+            <column name="ALFA3"/>
+        </createIndex>
+        
+        <createIndex indexName="UK_PAIS_ALFA2" tableName="PAIS">
+            <column name="ALFA2"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="PAIS"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

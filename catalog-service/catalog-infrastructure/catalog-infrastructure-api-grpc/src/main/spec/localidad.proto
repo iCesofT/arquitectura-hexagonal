@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package io.github.icesoft.catalog.infrastructure.api.grpc;
+
+option java_multiple_files = true;
+option java_package = "io.github.icesoft.catalog.infrastructure.api.grpc";
+
+import "resumenes.proto";
+
+message LocalidadResumen {
+  string id = 1;
+  string nombre = 2;
+}
+
+message LocalidadDetalle {
+  string id = 1;
+  string nombre = 2;
+  ProvinciaResumen provincia = 3;
+}
+
+message LocalidadPageResult {
+  repeated LocalidadResumen items = 1;
+  int32 page = 2;
+  int32 size = 3;
+  int64 total_items = 4;
+}
+
+message ListLocalidadesRequest {
+  string lang = 1;
+  int32 page = 2;
+  int32 size = 3;
+  string q = 4;
+}
+
+message GetLocalidadByIdRequest {
+  string id = 1;
+  string lang = 2;
+}
+
+service LocalidadService {
+  rpc ListLocalidades(ListLocalidadesRequest) returns (LocalidadPageResult);
+  rpc GetLocalidadById(GetLocalidadByIdRequest) returns (LocalidadDetalle);
+}

@@ -1,0 +1,224 @@
+[[capa-aplicacion]]
+= Capa de Aplicación
+
+[[proposito-aplicacion]]
+== Propósito
+
+La capa de aplicación orquesta los casos de uso: recibe una petición,
+invoca los puertos de salida necesarios del dominio y devuelve un resultado.
+No contiene lógica de negocio; sólo coordina.
+
+[source,java]
+----
+// Implementación simple de un caso de uso
+@Service
+public class GetPaisByIdUseCaseImpl implements GetPaisByIdUseCase {
+
+    private final PaisRepositoryPort repository;
+
+    @Override
+    public Pais getPorId(String id) {
+        return repository.getPorId(id)
+            .orElseThrow(() -> new NotFoundException(PaisErrorType.NO_ENCONTRADO, id));
+    }
+}
+----
+
+[[patron-mediator]]
+== Patrón Mediator
+
+Para escenarios más complejos (especialmente en localidades), el proyecto
+implementa el patrón *Mediator* (también llamado *Dispatcher* o *Bus*),
+que desacopla quien emite una petición de quien la procesa.
+
+[[interfaces-mediator]]
+=== Interfaces del Mediator
+
+[source,java]
+----
+// Marcador para cualquier petición que puede ser enviada por el mediator
+public interface Request<R> { }
+
+// Handler que procesa un tipo específico de Request
+public interface RequestHandler<Req extends Request<Res>, Res> {
+    Res handle(Req request);
+}
+
+// Interfaz principal del Mediator
+public interface Mediator {
+    <R> R send(Request<R> request);
+}
+----
+
+[[spring-mediator]]
+=== `SpringMediator` — Implementación con Spring
+
+`SpringMediator` usa el `ApplicationContext` de Spring para resolver
+dinámicamente el handler correcto a partir del tipo de la petición:
+
+[source,java]
+----
+@Component
+public class SpringMediator implements Mediator {
+
+    private final ApplicationContext context;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <R> R send(Request<R> request) {
+        // Resuelve el handler genérico para el tipo de request
+        var handler = (RequestHandler<Request<R>, R>)
+            context.getBean(resolveHandlerType(request.getClass()));
+        return executePipeline(handler, request);
+    }
+}
+----
+
+[[pipeline-behaviors]]
+== Pipeline Behaviors
+
+Los *Pipeline Behaviors* son middlewares que envuelven la ejecución de cualquier
+handler, aplicando lógica transversal (cross-cutting concerns) de forma
+declarativa y reutilizable.
+
+[source,text]
+----
+Request
+   │
+   ▼
+ValidationBehavior.handle()     ← valida la petición con Bean Validation
+   │
+   ▼
+LoggingBehavior.handle()        ← registra la petición y el tiempo de respuesta
+   │
+   ▼
+DomainEventsBehavior.handle()   ← recoge y publica eventos de dominio
+   │
+   ▼
+RequestHandler.handle()         ← lógica del caso de uso
+   │
+   ▼ (resultado)
+----
+
+[[validation-behavior]]
+=== `ValidationBehavior`
+
+Aplica *Jakarta Bean Validation* sobre el objeto `Request` antes de que
+llegue al handler. Si la validación falla, lanza una `ValidationException`
+con todos los errores de constraint.
+
+[source,java]
+----
+public class ValidationBehavior<Req extends Request<Res>, Res>
+    implements PipelineBehavior<Req, Res> {
+
+    private final Validator validator;
+
+    @Override
+    public Res handle(Req request, Supplier<Res> next) {
+        var violations = validator.validate(request);
+        if (!violations.isEmpty())
+            throw new ValidationException(violations);
+        return next.get();
+    }
+}
+----
+
+[[logging-behavior]]
+=== `LoggingBehavior`
+
+Registra la entrada y salida de cada handler con el tiempo de ejecución,
+facilitando la observabilidad sin instrumentar cada caso de uso individualmente:
+
+[source,java]
+----
+public class LoggingBehavior<Req extends Request<Res>, Res>
+    implements PipelineBehavior<Req, Res> {
+
+    @Override
+    public Res handle(Req request, Supplier<Res> next) {
+        log.debug("Ejecutando request: {}", request.getClass().getSimpleName());
+        var start = System.nanoTime();
+        try {
+            var result = next.get();
+            log.debug("Request completado en {} ms",
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start));
+            return result;
+        } catch (Exception e) {
+            log.error("Error en request {}: {}", request.getClass().getSimpleName(), e.getMessage());
+            throw e;
+        }
+    }
+}
+----
+
+[[domain-events-behavior]]
+=== `DomainEventsBehavior`
+
+Recoge los eventos de dominio generados por los agregados durante la ejecución
+del handler y los publica en el `ApplicationEventPublisher` de Spring,
+desacoplando la generación de eventos de su procesamiento:
+
+[source,java]
+----
+public class DomainEventsBehavior<Req extends Request<Res>, Res>
+    implements PipelineBehavior<Req, Res> {
+
+    @Override
+    public Res handle(Req request, Supplier<Res> next) {
+        var result = next.get();
+        // Recolecta y publica eventos de todos los agregados
+        collector.collectFrom(result)
+            .forEach(publisher::publishEvent);
+        return result;
+    }
+}
+----
+
+[[patron-cqrs-localidades]]
+== Patrón CQRS en Localidades
+
+Localidades demuestra el uso del patrón *Command Query Responsibility Segregation*
+combinado con el Mediator, separando explícitamente queries (consultas) de commands:
+
+[source,java]
+----
+// Query (objeto de petición)
+public record GetLocalidadByIdQuery(String id) implements Request<Localidad> { }
+
+// Handler (procesador de la query)
+@Component
+public class GetLocalidadByIdHandler
+    implements RequestHandler<GetLocalidadByIdQuery, Localidad> {
+
+    @Override
+    public Localidad handle(GetLocalidadByIdQuery query) {
+        return repository.getPorId(query.id())
+            .orElseThrow(() -> new NotFoundException(...));
+    }
+}
+
+// En el adaptador REST se usa el Mediator (no el UseCase directamente):
+mediator.send(new GetLocalidadByIdQuery(id));
+----
+
+[[transaccionalidad]]
+== Gestión de transacciones
+
+Las transacciones se declaran en los casos de uso de la capa de aplicación
+mediante `@Transactional`, siguiendo el principio de que la *unidad de trabajo*
+es un caso de uso completo, no una operación de repositorio individual:
+
+[source,java]
+----
+@Service
+@Transactional(readOnly = true)   // Optimización para operaciones de sólo lectura
+public class GetPaisByIdUseCaseImpl implements GetPaisByIdUseCase {
+    // ...
+}
+----
+
+NOTE: Marcar las transacciones como `readOnly = true` permite a Hibernate
+y al pool de conexiones aplicar optimizaciones específicas: no se generan
+sentencias `flush` al cerrar la sesión y el driver puede enrutar hacia réplicas
+de lectura en setups de alta disponibilidad.

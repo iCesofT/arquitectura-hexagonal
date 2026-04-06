@@ -1,0 +1,57 @@
+@startuml
+title Flujo de petición GET /paises/{id} - Arquitectura Hexagonal
+
+!theme amiga
+
+participant "Cliente HTTP" as Client
+participant "PaisesApiDelegateImpl\n(Adaptador REST)" as RestAdapter #LightBlue
+participant "GetPaisByIdUseCase\n(Puerto entrada)" as UseCase #LightGreen
+participant "GetPaisByIdUseCaseImpl\n(Caso de uso)" as UseCaseImpl #LightGreen
+participant "PaisRepositoryPort\n(Puerto salida)" as RepoPort #Orange
+participant "PaisRepositoryAdapter\n(Adaptador persistencia)" as RepoAdapter #LightCoral
+participant "JpaPaisRepository\n(Spring Data JPA)" as JpaRepo #LightCoral
+participant "PostgreSQL 16\n(Base de datos)" as Database #LightGray
+
+Client -> RestAdapter: GET /paises/{id}
+activate RestAdapter
+
+RestAdapter -> UseCase: getPaisById(id)
+activate UseCase
+
+UseCase -> UseCaseImpl: execute(id)
+activate UseCaseImpl
+
+UseCaseImpl -> RepoPort: findById(id)
+activate RepoPort
+
+RepoPort -> RepoAdapter: findById(id)
+activate RepoAdapter
+
+RepoAdapter -> JpaRepo: findById(id)
+activate JpaRepo
+
+JpaRepo -> Database: SELECT * FROM paises WHERE id = ?
+activate Database
+
+Database --> JpaRepo: País encontrado
+deactivate Database
+
+JpaRepo --> RepoAdapter: Optional<PaisEntity>
+deactivate JpaRepo
+
+RepoAdapter --> RepoPort: Optional<Pais>
+deactivate RepoAdapter
+
+RepoPort --> UseCaseImpl: Optional<Pais>
+deactivate RepoPort
+
+UseCaseImpl --> UseCase: PaisResponse
+deactivate UseCaseImpl
+
+UseCase --> RestAdapter: PaisResponse
+deactivate UseCase
+
+RestAdapter --> Client: HTTP 200 OK + PaisDTO
+deactivate RestAdapter
+
+@enduml

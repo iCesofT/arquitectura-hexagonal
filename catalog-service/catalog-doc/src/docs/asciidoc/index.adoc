@@ -1,0 +1,60 @@
+= Catalog Service: Documentación Técnica
+Equipo ACME <arquitectura@acme.io>
+{project-version}
+:doctype: book
+:toc: left
+:toclevels: 3
+:toc-title: Tabla de contenidos
+:sectnums:
+:sectanchors:
+:sectlinks:
+:icons: font
+:source-highlighter: rouge
+:rouge-style: github
+:imagesdir: ./images
+:chapter-label: Capítulo
+:appendix-caption: Apéndice
+:figure-caption: Figura
+:table-caption: Tabla
+:listing-caption: Listado
+:caution-caption: Atención
+:important-caption: Importante
+:note-caption: Nota
+:tip-caption: Consejo
+:warning-caption: Aviso
+:version-label: Versión
+:last-update-label: Última actualización
+:lang: es
+:spring-boot-version: {spring-boot-version}
+:java-version: {java-version}
+:build-timestamp: {build-timestamp}
+
+[.text-center]
+--
+[.lead]
+Documentación completa de arquitectura, diseño, buenas prácticas y optimizaciones de rendimiento del microservicio `catalog-service`.
+
+*Versión:* `{project-version}` | *Build:* `{build-timestamp}` | *Java:* `{java-version}` | *Spring Boot:* `{spring-boot-version}`
+--
+
+'''
+
+include::chapters/01-introduccion.adoc[]
+
+include::chapters/02-arquitectura-hexagonal.adoc[]
+
+include::chapters/03-modulos.adoc[]
+
+include::chapters/04-capa-dominio.adoc[]
+
+include::chapters/05-capa-aplicacion.adoc[]
+
+include::chapters/06-capa-infraestructura.adoc[]
+
+include::chapters/07-rendimiento.adoc[]
+
+include::chapters/08-contenedores.adoc[]
+
+include::chapters/09-testing.adoc[]
+
+include::chapters/10-buenas-practicas.adoc[]

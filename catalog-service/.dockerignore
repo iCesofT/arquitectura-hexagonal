@@ -1,0 +1,78 @@
+# Ignore version control
+.git
+.gitignore
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Ignore build artifacts (except the required JAR)
+.mvn/
+mvnw
+mvnw.cmd
+*.jar
+!boot/target/catalog-boot-*.jar
+*.war
+*.ear
+*.zip
+
+# Ignore Maven/Gradle build directories (except required JAR)
+target/
+!catalog-bootstrap/target/
+!catalog-bootstrap/boot/target/catalog-boot-*.jar
+build/
+out/
+
+# Ignore source code (not needed for runtime)
+catalog-application/src/
+catalog-bootstrap/src/
+catalog-domain/src/
+catalog-infrastructure/*/src/
+
+# Ignore Maven config files
+pom.xml
+catalog-application/pom.xml
+catalog-boostrap/pom.xml
+catalog-domain/pom.xml
+catalog-infrastructure/pom.xml
+catalog-infrastructure/*/pom.xml
+lombok.config
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore Docker files (to prevent recursion)
+Dockerfile
+.dockerignore
+
+# Ignore documentation
+README.md
+README-Docker.md
+docs/
+*.md
+
+# Ignore test results
+test-results/
+coverage/
+
+# Ignore environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore node modules if any frontend exists
+node_modules/
+npm-debug.log
+yarn-error.log

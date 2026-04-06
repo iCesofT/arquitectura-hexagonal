@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="003-create-localidad-table" author="liquibase" labels="ddl">
+        <createTable tableName="LOCALIDAD">
+            <column name="ID" type="VARCHAR(8)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="DENOMINACION" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PROVINCIA_ID" type="VARCHAR(2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Add foreign key constraint -->
+        <addForeignKeyConstraint
+            baseTableName="LOCALIDAD"
+            baseColumnNames="PROVINCIA_ID"
+            referencedTableName="PROVINCIA"
+            referencedColumnNames="ID"
+            constraintName="FK_LOCALIDAD_PROVINCIA"/>
+            
+        <!-- Add unique index for PROVINCIA_ID + DENOMINACION -->
+        <createIndex tableName="LOCALIDAD" indexName="UK_LOCALIDAD_PROVINCIA_DENOMINACION" unique="true">
+            <column name="PROVINCIA_ID"/>
+            <column name="DENOMINACION"/>
+        </createIndex>
+            
+        <rollback>
+            <dropIndex tableName="LOCALIDAD" indexName="UK_LOCALIDAD_PROVINCIA_DENOMINACION"/>
+            <dropForeignKeyConstraint baseTableName="LOCALIDAD" constraintName="FK_LOCALIDAD_PROVINCIA"/>
+            <dropTable tableName="LOCALIDAD"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,313 @@
+[[testing]]
+= Estrategia de Testing
+
+[[piramide-tests]]
+== Pirámide de tests
+
+El proyecto sigue la pirámide clásica de tests, con más tests unitarios
+que de integración y más de integración que end-to-end:
+
+[source,text]
+----
+          ┌─────────────────────┐
+          │   E2E / Contract    │  ← Pocos, lentos, frágiles
+          │  (gRPC / OpenAPI)   │
+          ├─────────────────────┤
+          │  Integración / BDD  │  ← Cucumber con Spring context
+          │  (Persistence + UC) │
+          ├─────────────────────┤
+          │    Unitarios        │  ← Muchos, rápidos, sin Spring
+          │  (Domain + App)     │
+          └─────────────────────┘
+----
+
+[[tests-dominio]]
+== Tests de dominio
+
+Los tests de entidades de dominio son *tests unitarios puros*: sin Spring,
+sin mocks, sin base de datos. Sólo instanciación y aserciones:
+
+[source,java]
+----
+// PaisTest.java
+class PaisTest {
+
+    @Test
+    void deberiaCrearPaisValido() {
+        var pais = new Pais("ESP", "España");
+        assertThat(pais.id()).isEqualTo("ESP");
+        assertThat(pais.denominacion()).isEqualTo("España");
+    }
+
+    @Test
+    void deberiaFallarSiIdEsNulo() {
+        assertThatThrownBy(() -> new Pais(null, "España"))
+            .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    void deberiaFallarSiDenominacionEsBlanca() {
+        assertThatThrownBy(() -> new Pais("ESP", "  "))
+            .isInstanceOf(ValidationException.class);
+    }
+}
+----
+
+[[cucumber-bdd]]
+== Tests BDD con Cucumber
+
+[[estructura-cucumber]]
+=== Estructura de tests BDD
+
+Los casos de uso de la capa de aplicación están cubiertos con tests de
+comportamiento escritos en *Gherkin* (lenguaje natural estructurado):
+
+[source,text]
+----
+catalog-application/src/test/
+├── java/io/github/icesoft/catalog/application/
+│   ├── pais/
+│   │   ├── GetPaisByIdUseCaseImplTest.java          ← JUnit 5 puro
+│   │   └── cucumber/
+│   │       ├── PaisUseCasesRunnerTest.java           ← Runner Cucumber
+│   │       ├── CucumberSpringConfiguration.java      ← Configuración Spring test
+│   │       ├── GetPaisByIdUseCaseStepDefinitions.java
+│   │       └── GetPaginatedPaisesUseCaseStepDefinitions.java
+│   └── ... (misma estructura para todas las entidades)
+└── resources/features/
+    ├── pais/
+    │   ├── GetPaisByIdUseCase.feature
+    │   └── GetPaginatedPaisesUseCase.feature
+    └── ... (features para todas las entidades)
+----
+
+[[feature-ejemplo]]
+=== Ejemplo de Feature
+
+[source,gherkin]
+----
+# GetPaisByIdUseCase.feature
+Feature: Obtener país por identificador
+
+  Background:
+    Given un repositorio de países con los siguientes datos:
+      | id  | denominacion |
+      | ESP | España       |
+      | FRA | Francia      |
+      | DEU | Alemania     |
+
+  Scenario: Obtener un país existente
+    When se solicita el país con id "ESP"
+    Then se obtiene el país con denominación "España"
+
+  Scenario: País no encontrado lanza excepción
+    When se solicita el país con id "XXX"
+    Then se lanza una NotFoundException con el id "XXX"
+
+  Scenario Outline: Validación de id nulo o vacío
+    When se solicita el país con id "<id_invalido>"
+    Then se lanza una ValidationException
+    Examples:
+      | id_invalido |
+      |             |
+      |    (null)   |
+----
+
+[[step-definitions]]
+=== Step Definitions
+
+[source,java]
+----
+@CucumberContextConfiguration
+@SpringBootTest(classes = ApplicationTestConfiguration.class)
+public class CucumberSpringConfiguration { }
+
+public class GetPaisByIdUseCaseStepDefinitions {
+
+    @Autowired
+    private GetPaisByIdUseCase useCase;
+
+    @MockBean
+    private PaisRepositoryPort repository;
+
+    private Pais resultado;
+    private Exception excepcion;
+
+    @Given("un repositorio de países con los siguientes datos:")
+    public void configurarRepositorio(List<Map<String, String>> datos) {
+        datos.forEach(fila -> {
+            var pais = new Pais(fila.get("id"), fila.get("denominacion"));
+            when(repository.getPorId(pais.id())).thenReturn(Optional.of(pais));
+        });
+    }
+
+    @When("se solicita el país con id {string}")
+    public void solicitarPais(String id) {
+        try {
+            resultado = useCase.getPorId(id);
+        } catch (Exception e) {
+            excepcion = e;
+        }
+    }
+
+    @Then("se obtiene el país con denominación {string}")
+    public void verificarDenominacion(String denominacion) {
+        assertThat(resultado.denominacion()).isEqualTo(denominacion);
+    }
+}
+----
+
+[[tests-persistencia]]
+== Tests de persistencia
+
+Los tests del adaptador de persistencia usan *Testcontainers* para
+levantar una instancia real de PostgreSQL en Docker durante los tests:
+
+[source,java]
+----
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Testcontainers
+class PaisRepositoryAdapterTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres =
+        new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("catalog_test")
+            .withUsername("test")
+            .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private PaisRepositoryAdapter adapter;
+
+    @Test
+    void deberiaObtenerPaisPorId() {
+        var resultado = adapter.getPorId("ESP");
+        assertThat(resultado).isPresent();
+        assertThat(resultado.get().denominacion()).isEqualTo("España");
+    }
+}
+----
+
+[[spock-tests]]
+== Tests con Spock Framework
+
+Para algunos módulos de infraestructura se usa *Spock*, un framework de testing
+expresivo basado en Groovy que combina BDD y DSL de testing:
+
+[source,groovy]
+----
+// TipoViaAdapterSpec.groovy
+class TipoViaAdapterSpec extends Specification {
+
+    def repository = Mock(JpaTipoViaRepository)
+    def mapper = Mock(TipoViaEntityMapper)
+    def adapter = new TipoViaAdapter(repository, mapper)
+
+    def "debería obtener un tipo de vía por id"() {
+        given: "un tipo de vía existente en base de datos"
+        def entity = TipoViaEntity.builder().id("CL").denominacion("Calle").build()
+        repository.findById("CL") >> Optional.of(entity)
+        mapper.toDomain(entity) >> new TipoVia("CL", "Calle")
+
+        when: "se solicita el tipo de vía con id CL"
+        def resultado = adapter.getPorId("CL")
+
+        then: "se obtiene el tipo de vía correctamente"
+        resultado.isPresent()
+        resultado.get().id() == "CL"
+        resultado.get().denominacion() == "Calle"
+    }
+
+    def "debería retornar vacío si no existe"() {
+        given:
+        repository.findById("XX") >> Optional.empty()
+
+        when:
+        def resultado = adapter.getPorId("XX")
+
+        then:
+        resultado.isEmpty()
+    }
+}
+----
+
+[[property-based-testing]]
+== Property-Based Testing con jqwik
+
+Para la capa de persistencia se utiliza *jqwik* (property-based testing),
+que genera automáticamente cientos de casos de prueba a partir de propiedades:
+
+[source,java]
+----
+class PaisRepositoryPropertyTest {
+
+    @Property
+    void todoIdAlmacenadoDebePoderseRecuperar(
+            @ForAll @StringLength(min = 1, max = 3)
+            @AlphaChars String id) {
+
+        // Para cualquier id válido almacenado, debe poder recuperarse
+        assumeThat(adapter.getPorId(id)).isPresent();
+        var pais = adapter.getPorId(id).get();
+        assertThat(pais.id()).isEqualTo(id);
+    }
+}
+----
+
+[[arch-unit]]
+== Tests de Arquitectura con ArchUnit
+
+`arch-unit-maven-plugin` valida automáticamente las reglas de arquitectura
+hexagonal en cada build de Maven:
+
+[source,yaml]
+----
+# arch-unit-rules.yml (configuración del plugin)
+rules:
+  - rule: NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS
+  - rule: NO_CLASSES_SHOULD_USE_FIELD_INJECTION
+  - rule: com.tngtech.archunit.library.Architectures.layeredArchitecture()
+      layers:
+        - name: Domain
+          packages: io.github.icesoft.catalog.domain..
+        - name: Application
+          packages: io.github.icesoft.catalog.application..
+        - name: Infrastructure
+          packages: io.github.icesoft.catalog.infrastructure..
+      rules:
+        - Domain may not access Application
+        - Domain may not access Infrastructure
+        - Application may not access Infrastructure
+----
+
+[[cobertura]]
+== Cobertura de tests
+
+[cols="1,1,3", options="header"]
+|===
+| Módulo | Tipo de tests | Cobertura objetivo
+
+| `catalog-domain`
+| JUnit 5 unitarios
+| ≥ 90% — todas las validaciones de entidades
+
+| `catalog-application`
+| JUnit 5 + Cucumber BDD
+| ≥ 85% — todos los casos de uso con escenarios happy/error
+
+| `catalog-infrastructure-persistence-jpa`
+| Spock + jqwik + Testcontainers
+| ≥ 80% — adaptadores con BD real
+
+| `catalog-infrastructure-api-rest`
+| `@WebMvcTest` con MockMvc
+| ≥ 75% — todos los endpoints y manejo de errores
+|===

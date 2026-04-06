@@ -1,0 +1,138 @@
+[[arquitectura-hexagonal]]
+= Arquitectura Hexagonal
+
+[[que-es]]
+== ¿Qué es la Arquitectura Hexagonal?
+
+La *Arquitectura Hexagonal* (también conocida como *Ports & Adapters*, propuesta por
+Alistair Cockburn en 2005) organiza el software en torno a la lógica de negocio,
+aislándola completamente de los detalles técnicos (base de datos, frameworks,
+protocolos de red, etc.) mediante el uso de *puertos* e *interfaces de adaptación*.
+
+El principio fundamental es:
+
+[quote, Alistair Cockburn]
+____
+Permite que una aplicación sea controlada igualmente por usuarios, programas, tests
+automatizados o scripts batch, y que se desarrolle y pruebe en aislamiento de sus
+eventuales dispositivos de tiempo de ejecución y bases de datos.
+____
+
+[[principios]]
+== Principios aplicados
+
+[[regla-dependencias]]
+=== Regla de dependencias
+
+Las dependencias siempre apuntan hacia el interior del hexágono.
+Nunca desde el dominio hacia la infraestructura.
+
+[source,text]
+----
+  ┌─────────────────────────────────────────────┐
+  │             INFRAESTRUCTURA                 │
+  │   ┌─────────────────────────────────────┐   │
+  │   │           APLICACIÓN                │   │
+  │   │   ┌─────────────────────────────┐   │   │
+  │   │   │          DOMINIO            │   │   │
+  │   │   │   (núcleo, sin framework)   │   │   │
+  │   │   └─────────────────────────────┘   │   │
+  │   └─────────────────────────────────────┘   │
+  └─────────────────────────────────────────────┘
+
+  Las flechas de dependencia apuntan siempre hacia dentro:
+  Infraestructura → Aplicación → Dominio
+----
+
+[[puertos-adaptadores]]
+=== Puertos y adaptadores
+
+[cols="1,2,3", options="header"]
+|===
+| Concepto | Descripción | Ejemplo en catalog-service
+
+| *Puerto de entrada*
+| Interfaz que define lo que la aplicación puede hacer (casos de uso).
+| `GetPaisByIdUseCase`, `GetPaginatedPaisesUseCase`
+
+| *Puerto de salida*
+| Interfaz que define lo que la aplicación necesita del exterior (repositorios).
+| `PaisRepositoryPort`, `ComunidadAutonomaRepositoryPort`
+
+| *Adaptador primario*
+| Implementación que conduce a la aplicación desde el exterior (REST, gRPC, CLI).
+| `PaisesApiDelegateImpl`, servicio gRPC
+
+| *Adaptador secundario*
+| Implementación que conecta la aplicación al exterior (BD, caché, mensajería).
+| `PaisRepositoryAdapter`, `CacheConfiguration`
+|===
+
+[[estructura-capas]]
+== Estructura de capas en catalog-service
+
+[source,text]
+----
+catalog-service/
+├── catalog-domain/            ← DOMINIO: entidades, puertos, excepciones
+│   └── (sin dependencias de framework)
+├── catalog-application/       ← APLICACIÓN: casos de uso, mediator
+│   └── (depende sólo de catalog-domain)
+├── catalog-infrastructure/    ← INFRAESTRUCTURA: adaptadores técnicos
+│   ├── catalog-infrastructure-api-rest/     (adaptador REST entrante)
+│   ├── catalog-infrastructure-api-grpc/     (adaptador gRPC entrante)
+│   └── catalog-infrastructure-persistence-jpa/ (adaptador BD saliente)
+└── catalog-bootstrap/         ← BOOTSTRAP: arranque, configuración Spring Boot
+    └── (ensambla todos los módulos)
+----
+
+[[flujo-peticion]]
+== Flujo de una petición
+
+El siguiente diagrama muestra el recorrido de una petición `GET /paises/{id}`:
+
+[plantuml, flujo-peticion, png]
+----
+include::../diagrams/arquitectura-hexagonal-flujo-peticion.puml[]
+----
+
+[[beneficios]]
+== Beneficios obtenidos
+
+[cols="1,3", options="header"]
+|===
+| Beneficio | Evidencia en el proyecto
+
+| *Testeabilidad*
+| La capa de dominio y aplicación se prueban sin Spring ni base de datos (tests en `catalog-application` con mocks).
+
+| *Intercambiabilidad*
+| Se puede cambiar PostgreSQL por CockroachDB sin modificar dominio ni aplicación (existe perfil `application-cockroach.yaml`).
+
+| *Independencia de protocolo*
+| El mismo caso de uso se sirve tanto por REST (`PaisesApiDelegateImpl`) como por gRPC, sin duplicar lógica.
+
+| *Evolución independiente*
+| Cada módulo Maven puede evolucionar, desplegarse y testearse de forma independiente.
+
+| *Comprensión del código*
+| La estructura de paquetes refleja el dominio de negocio, no la tecnología.
+|===
+
+[[verificacion-arquitectural]]
+== Verificación arquitectural
+
+El proyecto incorpora *ArchUnit* (`arch-unit-maven-plugin`) para validar
+automáticamente las reglas de dependencia en cada build:
+
+[source,java]
+----
+// Las dependencias entre capas se validan en CI/CD:
+// ✅ Dominio no depende de aplicación ni infraestructura
+// ✅ Aplicación sólo depende de dominio
+// ✅ Infraestructura puede depender de aplicación y dominio
+// ✅ Bootstrap puede depender de todos los módulos
+----
+
+NOTE: El plugin `arch-unit-maven-plugin` se ejecuta automáticamente en la fase `verify`
+de Maven, impidiendo que merge cualquier código que rompa las restricciones de arquitectura.

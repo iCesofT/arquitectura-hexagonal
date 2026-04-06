@@ -1,0 +1,19 @@
+ProvinciaResumen:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Código INE de la Provincia
+    nombre:
+      type: string
+      description: Denominación de la Provincia
+  required: [id, nombre]
+
+ProvinciaDetalle:
+  allOf:
+    - $ref: '#/ProvinciaResumen'
+    - type: object
+      properties:
+        comunidad:
+          $ref: '../comunidades/entities.yaml#/ComunidadResumen'
+  required: [id, nombre, comunidad]

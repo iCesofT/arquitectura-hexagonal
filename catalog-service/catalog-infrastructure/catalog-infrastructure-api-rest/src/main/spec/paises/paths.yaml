@@ -1,0 +1,65 @@
+paths:
+  /paises:
+    get:
+      summary: Lista todos los Países
+      operationId: getPaises
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Lista de Países
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './entities.yaml#/PaisResumen'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+  /paises/{id}:
+    get:
+      summary: Obtiene el detalle del País
+      operationId: getPaisById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Código ISO del País
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Detalle del País
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/PaisDetalle'
+        '404':
+          description: País no encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'

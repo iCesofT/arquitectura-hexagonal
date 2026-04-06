@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package io.github.icesoft.catalog.infrastructure.api.grpc;
+
+option java_multiple_files = true;
+option java_package = "io.github.icesoft.catalog.infrastructure.api.grpc";
+
+message PaisResumen {
+  string id = 1; // Código ISO del País
+  string nombre = 2; // Denominación del País
+}
+
+message PaisDetalle {
+  string id = 1; // Código ISO del País
+  string nombre = 2; // Denominación del País
+  string iso_alfa2 = 3; // Código ISO Alfa-2
+  string iso_alfa3 = 4; // Código ISO Alfa-3
+}
+
+message ListPaisesRequest {
+  string lang = 1;
+}
+
+message ListPaisesResponse {
+  repeated PaisResumen items = 1;
+}
+
+message GetPaisByIdRequest {
+  string id = 1;
+  string lang = 2;
+}
+
+service PaisService {
+  rpc ListPaises(ListPaisesRequest) returns (ListPaisesResponse);
+  rpc GetPaisById(GetPaisByIdRequest) returns (PaisDetalle);
+}

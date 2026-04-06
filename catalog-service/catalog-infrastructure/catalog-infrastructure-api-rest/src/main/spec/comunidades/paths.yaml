@@ -1,0 +1,65 @@
+paths:
+  /comunidades:
+    get:
+      summary: Lista todas las Comunidades Autónomas
+      operationId: getComunidades
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Lista de Comunidades Autónomas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './entities.yaml#/ComunidadResumen'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+  /comunidades/{id}:
+    get:
+      summary: Obtiene detalle de la Comunidad Autónoma
+      operationId: getComunidadById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Código INE de la Comunidad Autónoma
+        - name: lang
+          in: query
+          required: false
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Detalle de la Comunidad Autónoma
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/ComunidadDetalle'
+        '404':
+          description: Comunidad Autónoma no encontrada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'

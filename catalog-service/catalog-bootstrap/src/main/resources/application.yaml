@@ -1,0 +1,112 @@
+# Logging configuration
+#logging:
+#  level:
+#    io.github.icesoft.catalog: INFO
+#    org.springframework.web: INFO
+#    org.hibernate.SQL: WARN
+#    org.hibernate.orm.connections.pooling: DEBUG
+#    com.zaxxer.hikari: DEBUG
+#    root: INFO
+#  pattern:
+#    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Server configuration
+server:
+  port: ${SERVER_PORT:8080}
+  http2.enabled: true
+  compression:
+    enabled: true
+    mime-types:
+      - application/json
+      - application/xml
+  shutdown: graceful
+  servlet:
+    context-path: /api/v1
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:400}
+
+# Management endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+spring:
+  application.name: '@project.artifactId@'
+  cache.type: redis
+  data.redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    lettuce:
+      pool:
+        max-active: ${REDIS_MAX_ACTIVE:50}
+        max-idle: ${REDIS_MAX_IDLE:10}
+        min-idle: ${REDIS_MIN_IDLE:10}
+        max-wait: ${REDIS_MAX_WAIT:5000}
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/catalog}
+    username: ${DATABASE_USERNAME:catalog}
+    password: ${DATABASE_PASSWORD:catalog}
+    driver-class-name: ${DATABASE_DRIVER:org.postgresql.Driver}
+    hikari:
+      pool-name: ${DATABASE_POOL_NAME:CatalogHikariPool}
+      connection-timeout: ${DATABASE_CONNECTION_TIMEOUT:5000}
+      idle-timeout: ${DATABASE_IDLE_TIMEOUT:600000}
+      max-lifetime: ${DATABASE_MAX_LIFETIME:1800000}
+      maximum-pool-size: ${DATASOURCE_MAXIMUM_POOL_SIZE:50}
+      minimum-idle: ${DATASOURCE_MINIMUM_IDLE:10}
+      leak-detection-threshold: ${DATABASE_LEAK_DETECTION_THRESHOLD:10000}
+      auto-commit: true
+  # JPA configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${DATASOURCE_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: ${DATASOURCE_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${DATASOURCE_HIBERNATE_FORMAT_SQL:true}
+        jdbc:
+          batch_size: ${DATASOURCE_HIBERNATE_JDBC_BATCH_SIZE:25}
+  threads:
+    virtual:
+      enabled: ${VIRTUAL_THREADS_ENABLED:true}
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+  grpc:
+    server:
+      port: ${GRPC_SERVER_PORT:9090}
+      reflection:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+    path: /openapi/api-docs
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
+    path: /openapi/ui.html
+
+app:
+  jackson.blackbird.enabled: ${JACKSON_BLACKBIRD_ENABLED:false}
+
+grpc:
+  server:
+    port: ${GRPC_SERVER_PORT:9090}
+    reflection:
+      enabled: true

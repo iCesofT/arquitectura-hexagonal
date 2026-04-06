@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd
+                        http://www.liquibase.org/xml/ns/dbchangelog-ext
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+    <!-- Include table creation changesets -->
+    <include file="changelog/ddl/001-ddl-create-comunidad-autonoma-table.xml"/>
+    <include file="changelog/ddl/002-ddl-create-provincia-table.xml"/>
+    <include file="changelog/ddl/003-ddl-create-localidad-table.xml"/>
+    <include file="changelog/ddl/004-ddl-create-tipo-via-table.xml"/>
+    <include file="changelog/ddl/005-ddl-create-pais-table.xml"/>
+    
+    <!-- Include data loading changesets -->
+    <include file="changelog/dml/101-dml-load-comunidad-autonoma-data.xml"/>
+    <include file="changelog/dml/102-dml-load-provincia-data.xml"/>
+    <include file="changelog/dml/103-dml-load-localidad-data.xml"/>
+    <include file="changelog/dml/104-dml-load-tipo-via-data.xml"/>
+    <include file="changelog/dml/105-dml-load-pais-data.xml"/>
+
+</databaseChangeLog>

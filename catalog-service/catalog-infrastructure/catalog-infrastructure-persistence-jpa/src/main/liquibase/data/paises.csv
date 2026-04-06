@@ -1,0 +1,250 @@
+ID;ALFA3;ALFA2;DENOMINACION
+004;AFG;AF;Afganistán
+008;ALB;AL;Albania
+276;DEU;DE;Alemania
+020;AND;AD;Andorra
+024;AGO;AO;Angola
+660;AIA;AI;Anguila
+028;ATG;AG;Antigua y Barbuda
+010;ATA;AQ;Antártida
+682;SAU;SA;Arabia Saudita
+012;DZA;DZ;Argelia
+032;ARG;AR;Argentina
+051;ARM;AM;Armenia
+533;ABW;AW;Aruba
+036;AUS;AU;Australia
+040;AUT;AT;Austria
+031;AZE;AZ;Azerbaiyán
+044;BHS;BS;Bahamas (las)
+050;BGD;BD;Bangladés
+052;BRB;BB;Barbados
+048;BHR;BH;Baréin
+084;BLZ;BZ;Belice
+204;BEN;BJ;Benín
+060;BMU;BM;Bermudas
+112;BLR;BY;Bielorrusia
+068;BOL;BO;Bolivia, Estado Plurinacional de
+535;BES;BQ;Bonaire, San Eustaquio y Saba
+070;BIH;BA;Bosnia y Herzegovina
+072;BWA;BW;Botsuana
+076;BRA;BR;Brasil
+096;BRN;BN;Brunéi Darussalam
+100;BGR;BG;Bulgaria
+854;BFA;BF;Burkina Faso
+108;BDI;BI;Burundi
+064;BTN;BT;Bután
+056;BEL;BE;Bélgica
+132;CPV;CV;Cabo Verde
+116;KHM;KH;Camboya
+120;CMR;CM;Camerún
+124;CAN;CA;Canadá
+634;QAT;QA;Catar
+148;TCD;TD;Chad
+152;CHL;CL;Chile
+156;CHN;CN;China
+196;CYP;CY;Chipre
+170;COL;CO;Colombia
+174;COM;KM;Comoras
+178;COG;CG;Congo
+180;COD;CD;Congo (la República Democrática del)
+408;PRK;KP;Corea (la República Democrática Popular de)
+410;KOR;KR;Corea (la República de)
+188;CRI;CR;Costa Rica
+384;CIV;CI;Cote d Ivoire
+191;HRV;HR;Croacia
+192;CUB;CU;Cuba
+531;CUW;CW;Curaçao
+208;DNK;DK;Dinamarca
+212;DMA;DM;Dominica
+218;ECU;EC;Ecuador
+818;EGY;EG;Egipto
+222;SLV;SV;El Salvador
+784;ARE;AE;Emiratos Árabes Unidos (Los)
+232;ERI;ER;Eritrea
+703;SVK;SK;Eslovaquia
+705;SVN;SI;Eslovenia
+724;ESP;ES;España
+840;USA;US;Estados Unidos (los)
+233;EST;EE;Estonia
+231;ETH;ET;Etiopía
+608;PHL;PH;Filipinas (las)
+246;FIN;FI;Finlandia
+242;FJI;FJ;Fiyi
+250;FRA;FR;Francia
+266;GAB;GA;Gabón
+270;GMB;GM;Gambia (La)
+268;GEO;GE;Georgia
+239;SGS;GS;Georgia del sur y las islas sandwich del sur
+288;GHA;GH;Ghana
+292;GIB;GI;Gibraltar
+308;GRD;GD;Granada
+300;GRC;GR;Grecia
+304;GRL;GL;Groenlandia
+312;GLP;GP;Guadalupe
+316;GUM;GU;Guam
+320;GTM;GT;Guatemala
+254;GUF;GF;Guayana Francesa
+831;GGY;GG;Guernsey
+324;GIN;GN;Guinea
+226;GNQ;GQ;Guinea Ecuatorial
+624;GNB;GW;Guinea-Bisáu
+328;GUY;GY;Guyana
+332;HTI;HT;Haití
+340;HND;HN;Honduras
+344;HKG;HK;Hong Kong
+348;HUN;HU;Hungría
+356;IND;IN;India
+360;IDN;ID;Indonesia
+368;IRQ;IQ;Irak
+372;IRL;IE;Irlanda
+364;IRN;IR;Irán (la República Islámica de)
+074;BVT;BV;Isla Bouvet
+334;HMD;HM;Isla Heard e Islas McDonald
+574;NFK;NF;Isla Norfolk
+833;IMN;IM;Isla de Man
+162;CXR;CX;Isla de Navidad
+352;ISL;IS;Islandia
+136;CYM;KY;Islas Caimán (las)
+166;CCK;CC;Islas Cocos (Keeling)
+184;COK;CK;Islas Cook (las)
+234;FRO;FO;Islas Feroe (las)
+238;FLK;FK;Islas Malvinas [Falkland] (las)
+580;MNP;MP;Islas Marianas del Norte (las)
+584;MHL;MH;Islas Marshall (las)
+090;SLB;SB;Islas Salomón (las)
+796;TCA;TC;Islas Turcas y Caicos (las)
+092;VGB;VG;Islas Vírgenes (Británicas)
+850;VIR;VI;Islas Vírgenes (EE.UU.)
+581;UMI;UM;Islas de Ultramar Menores de Estados Unidos (las)
+248;ALA;AX;Islas Åland
+376;ISR;IL;Israel
+380;ITA;IT;Italia
+388;JAM;JM;Jamaica
+392;JPN;JP;Japón
+832;JEY;JE;Jersey
+400;JOR;JO;Jordania
+398;KAZ;KZ;Kazajistán
+404;KEN;KE;Kenia
+417;KGZ;KG;Kirguistán
+296;KIR;KI;Kiribati
+414;KWT;KW;Kuwait
+418;LAO;LA;Lao, (la) República Democrática Popular
+426;LSO;LS;Lesoto
+428;LVA;LV;Letonia
+430;LBR;LR;Liberia
+434;LBY;LY;Libia
+438;LIE;LI;Liechtenstein
+440;LTU;LT;Lituania
+442;LUX;LU;Luxemburgo
+422;LBN;LB;Líbano
+446;MAC;MO;Macao
+807;MKD;MK;Macedonia (la antigua República Yugoslava de)
+450;MDG;MG;Madagascar
+458;MYS;MY;Malasia
+454;MWI;MW;Malaui
+462;MDV;MV;Maldivas
+470;MLT;MT;Malta
+466;MLI;ML;Malí
+504;MAR;MA;Marruecos
+474;MTQ;MQ;Martinica
+480;MUS;MU;Mauricio
+478;MRT;MR;Mauritania
+175;MYT;YT;Mayotte
+583;FSM;FM;Micronesia (los Estados Federados de)
+498;MDA;MD;Moldavia (la República de)
+496;MNG;MN;Mongolia
+499;MNE;ME;Montenegro
+500;MSR;MS;Montserrat
+508;MOZ;MZ;Mozambique
+104;MMR;MM;Myanmar
+484;MEX;MX;México
+492;MCO;MC;Mónaco
+516;NAM;NA;Namibia
+520;NRU;NR;Nauru
+524;NPL;NP;Nepal
+558;NIC;NI;Nicaragua
+566;NGA;NG;Nigeria
+570;NIU;NU;Niue
+578;NOR;NO;Noruega
+540;NCL;NC;Nueva Caledonia
+554;NZL;NZ;Nueva Zelanda
+562;NER;NE;Níger (el)
+512;OMN;OM;Omán
+586;PAK;PK;Pakistán
+585;PLW;PW;Palaos
+275;PSE;PS;Palestina, Estado de
+591;PAN;PA;Panamá
+598;PNG;PG;Papúa Nueva Guinea
+600;PRY;PY;Paraguay
+528;NLD;NL;Países Bajos (los)
+604;PER;PE;Perú
+612;PCN;PN;Pitcairn
+258;PYF;PF;Polinesia Francesa
+616;POL;PL;Polonia
+620;PRT;PT;Portugal
+630;PRI;PR;Puerto Rico
+826;GBR;GB;Reino Unido (el)
+140;CAF;CF;República Centroafricana (la)
+203;CZE;CZ;República Checa (la)
+214;DOM;DO;República Dominicana (la)
+638;REU;RE;Reunión
+646;RWA;RW;Ruanda
+642;ROU;RO;Rumania
+643;RUS;RU;Rusia, (la) Federación de
+732;ESH;EH;Sahara Occidental
+882;WSM;WS;Samoa
+016;ASM;AS;Samoa Americana
+652;BLM;BL;San Bartolomé
+659;KNA;KN;San Cristóbal y Nieves
+674;SMR;SM;San Marino
+663;MAF;MF;San Martín (parte francesa)
+666;SPM;PM;San Pedro y Miquelón
+670;VCT;VC;San Vicente y las Granadinas
+654;SHN;SH;Santa Helena, Ascensión y Tristán de Acuña
+662;LCA;LC;Santa Lucía
+336;VAT;VA;Santa Sede[Estado de la Ciudad del Vaticano] (la)
+678;STP;ST;Santo Tomé y Príncipe
+686;SEN;SN;Senegal
+688;SRB;RS;Serbia
+690;SYC;SC;Seychelles
+694;SLE;SL;Sierra Leona
+702;SGP;SG;Singapur
+534;SXM;SX;Sint Maarten (parte holandesa)
+760;SYR;SY;Siria, (la) República Árabe
+706;SOM;SO;Somalia
+144;LKA;LK;Sri Lanka
+748;SWZ;SZ;Suazilandia
+710;ZAF;ZA;Sudáfrica
+729;SDN;SD;Sudán (el)
+728;SSD;SS;Sudán del Sur
+752;SWE;SE;Suecia
+756;CHE;CH;Suiza
+740;SUR;SR;Surinam
+744;SJM;SJ;Svalbard y Jan Mayen
+764;THA;TH;Tailandia
+158;TWN;TW;Taiwán (Provincia de China)
+834;TZA;TZ;Tanzania, República Unida de
+762;TJK;TJ;Tayikistán
+086;IOT;IO;Territorio Británico del Océano Índico (el)
+260;ATF;TF;Territorios Australes Franceses (los)
+626;TLS;TL;Timor-Leste
+768;TGO;TG;Togo
+772;TKL;TK;Tokelau
+776;TON;TO;Tonga
+780;TTO;TT;Trinidad y Tobago
+795;TKM;TM;Turkmenistán
+792;TUR;TR;Turquía
+798;TUV;TV;Tuvalu
+788;TUN;TN;Túnez
+804;UKR;UA;Ucrania
+800;UGA;UG;Uganda
+858;URY;UY;Uruguay
+860;UZB;UZ;Uzbekistán
+548;VUT;VU;Vanuatu
+862;VEN;VE;Venezuela, República Bolivariana de
+704;VNM;VN;Viet Nam
+876;WLF;WF;Wallis y Futuna
+887;YEM;YE;Yemen
+262;DJI;DJ;Yibuti
+894;ZMB;ZM;Zambia
+716;ZWE;ZW;Zimbabue

@@ -1,0 +1,65 @@
+paths:
+  /provincias:
+    get:
+      summary: Lista todas las Provincias
+      operationId: getProvincias
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Lista de Provincias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './entities.yaml#/ProvinciaResumen'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+  /provincias/{id}:
+    get:
+      summary: Obtiene el detalle de la Provincia
+      operationId: getProvinciaById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Código INE de la Provincia
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Detalle de la Provincia
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/ProvinciaDetalle'
+        '404':
+          description: Provincia no encontrada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'

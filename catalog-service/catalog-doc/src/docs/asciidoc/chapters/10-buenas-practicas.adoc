@@ -1,0 +1,426 @@
+[[buenas-practicas]]
+= Buenas Prácticas
+
+[[solid]]
+== Principios SOLID
+
+[[srp]]
+=== S — Single Responsibility Principle
+
+Cada clase tiene *una única razón para cambiar*:
+
+[cols="2,3", options="header"]
+|===
+| Clase | Responsabilidad única
+
+| `PaisesApiDelegateImpl`
+| Mapear HTTP request/response a/desde el dominio
+
+| `GetPaisByIdUseCaseImpl`
+| Orquestar la lógica de obtención de un país
+
+| `PaisRepositoryAdapter`
+| Traducir entre el modelo JPA y el modelo de dominio
+
+| `PaisEntityMapper`
+| Mapeo entre `PaisEntity` y `Pais` (dominio)
+
+| `GlobalExceptionHandler`
+| Traducir excepciones de dominio a respuestas HTTP
+|===
+
+[[ocp]]
+=== O — Open/Closed Principle
+
+Los casos de uso son *abiertos a extensión* (nuevo comportamiento via pipeline behaviors)
+y *cerrados a modificación*:
+
+[source,java]
+----
+// Para añadir logging, caching o tracing a TODOS los handlers:
+// → Crear un nuevo PipelineBehavior (extensión)
+// → No modificar ningún handler existente (cerrado)
+
+@Component
+@Order(1)
+public class TracingBehavior<Req, Res> implements PipelineBehavior<Req, Res> {
+    @Override
+    public Res handle(Req request, Supplier<Res> next) {
+        // Añade trazabilidad a todos los handlers automáticamente
+        return Tracer.trace(request.getClass().getSimpleName(), next);
+    }
+}
+----
+
+[[lsp]]
+=== L — Liskov Substitution Principle
+
+Los adaptadores son intercambiables siempre que cumplan el contrato del puerto:
+
+[source,java]
+----
+// El caso de uso sólo conoce la interfaz PaisRepositoryPort
+// Se puede sustituir JPA por un adaptador in-memory en tests:
+PaisRepositoryPort repositorio = new InMemoryPaisRepository();  // tests
+PaisRepositoryPort repositorio = new PaisRepositoryAdapter(...); // producción
+// → El caso de uso funciona igual con cualquier implementación
+----
+
+[[isp]]
+=== I — Interface Segregation Principle
+
+Las interfaces de casos de uso son mínimas: *un método por interfaz*.
+Ningún cliente se ve forzado a depender de métodos que no usa:
+
+[source,java]
+----
+// ✅ Correcto — Interfaces pequeñas y específicas
+interface GetPaisByIdUseCase      { Pais getPorId(String id); }
+interface GetPaginatedPaisesUseCase { Pagina<Pais> getPaginados(Paginacion p); }
+
+// ❌ Incorrecto — Una interfaz "dios" que obliga a implementar todo
+interface PaisUseCase {
+    Pais getPorId(String id);
+    Pagina<Pais> getPaginados(Paginacion p);
+    Pais crear(CrearPaisCommand cmd);    // ← fuerza dependencia innecesaria
+    void eliminar(String id);
+}
+----
+
+[[dip]]
+=== D — Dependency Inversion Principle
+
+Los módulos de alto nivel (aplicación) no dependen de módulos de bajo nivel
+(infraestructura). Ambos dependen de abstracciones (interfaces del dominio):
+
+[source,java]
+----
+// catalog-application depende de la INTERFAZ (dominio)
+private final PaisRepositoryPort repository;  // interfaz en catalog-domain
+
+// catalog-infrastructure-persistence-jpa IMPLEMENTA la interfaz
+@Repository
+public class PaisRepositoryAdapter implements PaisRepositoryPort { ... }
+
+// Spring Boot inyecta la implementación concreta en tiempo de ejecución
+// → El código de aplicación nunca referencia JPA ni Hibernate directamente
+----
+
+[[clean-code]]
+== Clean Code
+
+[[nombrado-expresivo]]
+=== Nombrado expresivo
+
+[cols="1,1,1", options="header"]
+|===
+| Tipo | ❌ Evitar | ✅ Usar
+
+| Método
+| `get(String x)`
+| `getPorId(String id)`
+
+| Método
+| `process(Object o)`
+| `executePipeline(RequestHandler h, Request r)`
+
+| Variable
+| `List<Object> l`
+| `List<DomainEvent> domainEvents`
+
+| Clase
+| `DataHelper`
+| `PaisEntityMapper`
+
+| Constante
+| `int N = 10`
+| `int MAX_RESULTADOS_PAGINA = 100`
+|===
+
+[[funciones-pequenas]]
+=== Funciones pequeñas con una responsabilidad
+
+[source,java]
+----
+// ✅ Método pequeño, nombre expresivo, una sola responsabilidad
+@Override
+public Pais getPorId(String id) {
+    return repository.getPorId(id)
+        .orElseThrow(() -> new NotFoundException(PaisErrorType.NO_ENCONTRADO, id));
+}
+
+// Separación de lógica en métodos descriptivos (pipeline)
+private <R> R executePipeline(RequestHandler<Request<R>, R> handler, Request<R> request) {
+    return buildPipeline(handler).apply(request);
+}
+----
+
+[[inmutabilidad]]
+=== Inmutabilidad por defecto
+
+[source,java]
+----
+// ✅ Records: inmutables por diseño
+public record Pais(String id, String denominacion) { }
+public record Pagina<T>(List<T> contenido, long totalElementos, ...) { }
+public record Paginacion(int pagina, int tamanio) { }
+
+// ✅ Colecciones inmutables
+return List.copyOf(domainEvents);    // No expone la lista interna mutable
+----
+
+[[excepciones-significativas]]
+=== Excepciones con significado de negocio
+
+[source,java]
+----
+// ✅ Excepción específica del dominio con contexto
+throw new NotFoundException(PaisErrorType.NO_ENCONTRADO, id);
+// → "El país con id 'XXX' no ha sido encontrado"
+
+// ❌ Excepción genérica sin contexto
+throw new RuntimeException("Not found");
+----
+
+[[ddd]]
+== Domain-Driven Design (DDD)
+
+[[lenguaje-ubicuo]]
+=== Lenguaje ubicuo
+
+El código usa el *mismo vocabulario* que el negocio, sin traducciones:
+
+[cols="1,1", options="header"]
+|===
+| Concepto de negocio | Nombre en el código
+
+| País
+| `Pais`
+
+| Comunidad Autónoma
+| `ComunidadAutonoma`
+
+| Obtener lista paginada
+| `getPaginados(Paginacion)`
+
+| Primera página
+| `esPrimeraPagina()`
+
+| Evento de dominio
+| `DomainEvent`
+|===
+
+[[agregados]]
+=== Agregados y límites transaccionales
+
+Cada entidad geográfica es su propio *agregado* con su propio repositorio:
+no hay joins entre agregados a nivel de repositorio, manteniendo límites
+transaccionales claros.
+
+[source,java]
+----
+// ✅ Cada agregado tiene su propio repositorio
+PaisRepositoryPort          paisRepository;
+ProvinciaRepositoryPort     provinciaRepository;
+
+// ❌ Un repositorio para todo violaría los límites del agregado
+CatalogRepositoryPort       todoElCatalogo;
+----
+
+[[codigo-generado]]
+== Código generado vs. código manual
+
+El proyecto equilibra código generado y código manual:
+
+[cols="2,2,2", options="header"]
+|===
+| Qué se genera | Herramienta | Cuándo
+
+| Interfaces REST y DTOs
+| `openapi-generator-maven-plugin`
+| En `generate-sources` (cada build)
+
+| Mappers
+| MapStruct (annotation processor)
+| En `compile` (cada build)
+
+| Stubs gRPC
+| `protobuf-maven-plugin`
+| En `generate-sources` (cada build)
+
+| Metamodelo JPA
+| `hibernate-jpamodelgen`
+| En `compile` (cada build)
+|===
+
+.Principio de separación
+[IMPORTANT]
+====
+El código generado *nunca se edita a mano*. Si se necesita un comportamiento
+diferente, se extiende mediante el patrón *Delegate* (REST) o se añade lógica
+en el mapper manual (MapStruct). Esto garantiza que el código generado
+pueda regenerarse sin perder cambios.
+====
+
+[[observabilidad]]
+== Observabilidad
+
+[[actuator]]
+=== Spring Boot Actuator
+
+[source,yaml]
+----
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus, caches, loggers
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true     # /actuator/health/liveness y /readiness para K8s
+----
+
+[cols="1,3", options="header"]
+|===
+| Endpoint | Propósito
+
+| `/actuator/health`
+| Estado global: BD, Redis, disco. Usado por load balancer.
+
+| `/actuator/health/liveness`
+| Liveness probe de Kubernetes (¿está vivo el proceso?).
+
+| `/actuator/health/readiness`
+| Readiness probe de Kubernetes (¿está listo para recibir tráfico?).
+
+| `/actuator/metrics`
+| Métricas de JVM, HTTP, caché, HikariCP.
+
+| `/actuator/prometheus`
+| Métricas en formato Prometheus para scraping.
+
+| `/actuator/caches`
+| Estado de los cachés Caffeine y Redis.
+
+| `/actuator/loggers`
+| Cambio dinámico de nivel de logging sin reiniciar.
+|===
+
+[[micrometer-metricas]]
+=== Métricas con Micrometer
+
+Las métricas clave para monitorizar en producción:
+
+[source,text]
+----
+# Pool de conexiones HikariCP
+hikaricp.connections.active           ← conexiones activas
+hikaricp.connections.pending          ← peticiones esperando conexión
+hikaricp.connections.timeout.total    ← timeouts de adquisición
+
+# Caché Caffeine
+cache.gets{result="hit",cache="paises"}   ← hits
+cache.gets{result="miss",cache="paises"}  ← misses
+cache.size{cache="paises"}                ← tamaño actual
+
+# HTTP
+http.server.requests{uri="/paises/{id}",status="200"} ← latencia por endpoint
+http.server.requests{status="404"}                    ← errores 404
+
+# JVM
+jvm.memory.used{area="heap"}         ← uso del heap
+jvm.gc.pause                          ← pausas de GC (ZGC)
+jvm.threads.live                      ← hilos activos (virtual threads)
+----
+
+[[git-info]]
+=== Build y Git metadata
+
+El plugin `git-commit-id-maven-plugin` inyecta información del build
+en el artefacto, visible vía `/actuator/info`:
+
+[source,json]
+----
+{
+  "build": {
+    "version": "0.0.1-SNAPSHOT",
+    "artifact": "catalog-bootstrap"
+  },
+  "git": {
+    "commit": {
+      "id": "a1b2c3d",
+      "time": "2026-03-18T10:00:00Z"
+    },
+    "branch": "main"
+  }
+}
+----
+
+Esto permite saber exactamente qué commit está desplegado en producción
+sin acceder al servidor.
+
+[[resumen-final]]
+== Resumen de buenas prácticas aplicadas
+
+[cols="1,2,3", options="header"]
+|===
+| Categoría | Práctica | Aplicación
+
+| *Arquitectura*
+| Hexagonal (Ports & Adapters)
+| Separación estricta en capas, dependencias hacia el interior
+
+| *Arquitectura*
+| Design-First API
+| OpenAPI y Protobuf como contrato canónico
+
+| *Código*
+| SOLID
+| Interfaces mínimas, inversión de dependencias, clases con una responsabilidad
+
+| *Código*
+| Inmutabilidad
+| Java records para entidades de dominio y DTOs internos
+
+| *Código*
+| Fail Fast
+| Validación en constructores de entidades, no en servicios
+
+| *DDD*
+| Lenguaje Ubicuo
+| Nombres en español que reflejan el negocio
+
+| *Rendimiento*
+| Caché multinivel
+| Caffeine (L1) + Redis (L2) con fallback graceful
+
+| *Rendimiento*
+| Virtual Threads
+| Máximo throughput en operaciones I/O bound
+
+| *Rendimiento*
+| Pool de conexiones tuneado
+| HikariCP con parámetros basados en la carga real
+
+| *Seguridad*
+| Usuario no root en contenedor
+| Limitación de impacto ante vulnerabilidades RCE
+
+| *Seguridad*
+| OWASP Dependency-Check
+| Detección automática de CVEs en dependencias
+
+| *Calidad*
+| ArchUnit
+| Validación automática de reglas de arquitectura en CI
+
+| *Calidad*
+| Spotless + SpotBugs
+| Formateo automático y análisis estático en cada build
+
+| *Observabilidad*
+| Actuator + Micrometer + Prometheus
+| Visibilidad completa del estado del servicio en producción
+|===

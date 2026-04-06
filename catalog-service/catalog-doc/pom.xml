@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.icesoft</groupId>
+        <artifactId>catalog-service</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>catalog-doc</artifactId>
+    <name>Catalog :: Documentation</name>
+    <description>Documentación técnica del catalog-service en AsciiDoc</description>
+    <packaging>pom</packaging>
+
+    <build>
+        <defaultGoal>process-resources</defaultGoal>
+        <plugins>
+            <plugin>
+                <groupId>org.asciidoctor</groupId>
+                <artifactId>asciidoctor-maven-plugin</artifactId>
+                <version>${asciidoctor-maven-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctorj-diagram</artifactId>
+                        <version>${asciidoctorj-diagram.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.asciidoctor</groupId>
+                        <artifactId>asciidoctorj-pdf</artifactId>
+                        <version>${asciidoctorj-pdf.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDirectory>${project.basedir}/src/docs/asciidoc</sourceDirectory>
+                    <sourceDocumentName>index.adoc</sourceDocumentName>
+                    <requires>
+                        <require>asciidoctor-diagram</require>
+                    </requires>
+                    <attributes>
+                        <project-version>${project.version}</project-version>
+                        <project-group-id>${project.groupId}</project-group-id>
+                        <spring-boot-version>${spring-boot.version}</spring-boot-version>
+                        <java-version>${java.version}</java-version>
+                        <build-timestamp>${timestamp}</build-timestamp>
+                        <toc>left</toc>
+                        <toclevels>3</toclevels>
+                        <sectnums>true</sectnums>
+                        <sectanchors>true</sectanchors>
+                        <icons>font</icons>
+                        <source-highlighter>rouge</source-highlighter>
+                        <imagesdir>./images</imagesdir>
+                        <allow-uri-read>true</allow-uri-read>
+                        <idprefix/>
+                        <idseparator>-</idseparator>
+                    </attributes>
+                </configuration>
+                <executions>
+                    <!-- HTML5 -->
+                    <execution>
+                        <id>generate-html</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                        <configuration>
+                            <backend>html5</backend>
+                            <outputDirectory>${project.build.directory}/docs/html</outputDirectory>
+                            <attributes>
+                                <stylesdir>./css</stylesdir>
+                                <stylesheet>acme.css</stylesheet>
+                            </attributes>
+                        </configuration>
+                    </execution>
+                    <!-- PDF -->
+                    <execution>
+                        <id>generate-pdf</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>process-asciidoc</goal>
+                        </goals>
+                        <configuration>
+                            <backend>pdf</backend>
+                            <outputDirectory>${project.build.directory}/docs/pdf</outputDirectory>
+                            <attributes>
+                                <pdf-themesdir>${project.basedir}/src/docs/asciidoc/themes</pdf-themesdir>
+                                <pdf-theme>${asciidoctor.theme}</pdf-theme>
+                            </attributes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

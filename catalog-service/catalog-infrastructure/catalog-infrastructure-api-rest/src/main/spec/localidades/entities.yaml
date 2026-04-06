@@ -1,0 +1,38 @@
+LocalidadResumen:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Código de Localidad
+    nombre:
+      type: string
+      description: Denominación de la Localidad
+  required: [id, nombre]
+
+LocalidadDetalle:
+  allOf:
+    - $ref: '#/LocalidadResumen'
+    - type: object
+      properties:
+        provincia:
+          $ref: '../provincias/entities.yaml#/ProvinciaResumen'
+  required: [id, nombre, provincia]
+
+LocalidadPageResult:
+  description: Resultado de página para localidades
+  type: object
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/LocalidadResumen'
+      description: Lista de localidades en la página actual
+    page:
+      type: integer
+      description: Número de página actual
+    size:
+      type: integer
+      description: Número de elementos por página
+    totalItems:
+      type: integer
+      description: Número total de elementos

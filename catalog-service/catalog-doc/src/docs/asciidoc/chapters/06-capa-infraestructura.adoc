@@ -1,0 +1,281 @@
+[[capa-infraestructura]]
+= Capa de Infraestructura
+
+[[adaptador-rest]]
+== Adaptador REST
+
+[[design-first]]
+=== Enfoque Design-First con OpenAPI
+
+El adaptador REST sigue un enfoque *Design-First*: primero se define el contrato
+en YAML (OpenAPI 3.0), y después se genera el código Java automáticamente.
+
+[source,text]
+----
+src/main/spec/
+├── openapi.yaml                ← Documento raíz (incluye los demás)
+├── paises/
+│   ├── paths.yaml              ← Definición de endpoints /paises
+│   └── entities.yaml           ← DTOs PaisResumenDto, PaisDetalleDto
+├── comunidades/
+├── provincias/
+├── localidades/
+└── tipos-via/
+----
+
+El plugin `openapi-generator-maven-plugin` genera en la fase `generate-sources`:
+
+* Interfaces de controlador (`PaisesApi`, `ComunidadesApi`, etc.)
+* DTOs de request/response (`PaisResumenDto`, `PaginacionDto`, etc.)
+* Clases de validación Jakarta
+
+[source,xml]
+----
+<plugin>
+    <groupId>org.openapitools</groupId>
+    <artifactId>openapi-generator-maven-plugin</artifactId>
+    <configuration>
+        <generatorName>spring</generatorName>
+        <library>spring-boot</library>
+        <generateApiTests>false</generateApiTests>
+        <generateModelTests>false</generateModelTests>
+        <!-- Usa el patrón Delegate para separar la interfaz generada
+             de la implementación manual -->
+        <configOptions>
+            <delegatePattern>true</delegatePattern>
+            <useSpringBoot3>true</useSpringBoot3>
+            <useTags>true</useTags>
+        </configOptions>
+    </configuration>
+</plugin>
+----
+
+[[delegate-pattern]]
+=== Patrón Delegate
+
+El generador crea interfaces `*ApiDelegate` que actúan como puntos de extensión.
+Sólo se implementan los métodos necesarios, sin tocar el código generado:
+
+[source,java]
+----
+// Código generado (no modificar)
+public interface PaisesApiDelegate {
+    default ResponseEntity<PaisDetalleDto> getPaisById(String id) {
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    }
+}
+
+// Implementación manual (mantenida por el equipo)
+@Component
+public class PaisesApiDelegateImpl implements PaisesApiDelegate {
+
+    private final GetPaisByIdUseCase useCase;
+    private final PaisMapper mapper;
+
+    @Override
+    public ResponseEntity<PaisDetalleDto> getPaisById(String id) {
+        return ResponseEntity.ok(mapper.toDetalle(useCase.getPorId(id)));
+    }
+}
+----
+
+[[mapstruct-rest]]
+=== MapStruct para mapeo de DTOs
+
+Los mappers entre entidades de dominio y DTOs de la API se generan en tiempo
+de compilación con *MapStruct*, eliminando reflexión y mejorando el rendimiento:
+
+[source,java]
+----
+@Mapper(componentModel = "spring")
+public interface PaisMapper {
+    PaisDetalleDto toDetalle(Pais pais);
+    PaisResumenDto toResumen(Pais pais);
+}
+----
+
+[[manejo-excepciones-rest]]
+=== Manejo global de excepciones
+
+El `GlobalExceptionHandler` traduce las excepciones de dominio en respuestas
+HTTP siguiendo el estándar *RFC 9457 Problem Detail*:
+
+[source,java]
+----
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    public ProblemDetail handleNotFound(NotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ProblemDetail handleValidation(ValidationException ex) {
+        return ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+}
+----
+
+[[jackson-configuration]]
+=== Configuración de Jackson
+
+Se configura Jackson con el módulo *Blackbird* para optimizar la serialización
+mediante generación de código bytecode en lugar de reflexión:
+
+[source,java]
+----
+@Configuration
+@ConditionalOnProperty(
+    name = "spring.jackson.blackbird.enabled",
+    havingValue = "true",
+    matchIfMissing = false)
+public class JacksonConfiguration {
+
+    @Bean
+    @Primary
+    public ObjectMapper objectMapper() {
+        return JsonMapper.builder()
+            .addModule(new BlackbirdModule())     // Reemplaza reflexión por bytecode
+            .disable(FAIL_ON_UNKNOWN_PROPERTIES)
+            .disable(FAIL_ON_NULL_FOR_PRIMITIVES)
+            .build();
+    }
+}
+----
+
+[[adaptador-grpc]]
+== Adaptador gRPC
+
+[[protocol-buffers]]
+=== Protocol Buffers
+
+Las especificaciones de la API gRPC se definen en ficheros `.proto`,
+que son el contrato canónico del servicio:
+
+[source,protobuf]
+----
+// pais.proto
+syntax = "proto3";
+
+package catalog.pais;
+
+import "catalog_common.proto";
+
+service PaisService {
+    rpc ListPaises(ListPaisesRequest) returns (ListPaisesResponse);
+    rpc GetPaisById(GetPaisByIdRequest) returns (PaisDetalle);
+}
+
+message PaisDetalle {
+    string id = 1;
+    string denominacion = 2;
+}
+
+message ListPaisesRequest {
+    catalog.common.PageRequest page = 1;
+}
+
+message ListPaisesResponse {
+    repeated PaisResumen paises = 1;
+    catalog.common.PageResult pageResult = 2;
+}
+----
+
+La ventaja frente a REST es la serialización binaria con Protobuf:
+**3-10x más rápida** y **5-10x más compacta** que JSON para cargas de datos típicas.
+
+[[adaptador-persistencia]]
+== Adaptador de Persistencia JPA
+
+[[entidades-jpa]]
+=== Entidades JPA
+
+Las entidades JPA son clases completamente separadas de las entidades de dominio.
+Esta separación evita contaminar el dominio con anotaciones de persistencia:
+
+[source,java]
+----
+@Entity
+@Table(name = "PAIS")
+@Getter @Setter @Builder
+@NoArgsConstructor @AllArgsConstructor
+public class PaisEntity {
+
+    @Id
+    @Column(name = "ID", nullable = false, length = 3)
+    private String id;
+
+    @Column(name = "DENOMINACION", nullable = false, length = 255)
+    private String denominacion;
+}
+----
+
+[[repository-adapter]]
+=== Repository Adapter
+
+El adaptador implementa el puerto de dominio, convirtiendo entre el modelo
+JPA y el modelo de dominio mediante un mapper MapStruct:
+
+[source,java]
+----
+@Repository
+@RequiredArgsConstructor
+public class PaisRepositoryAdapter implements PaisRepositoryPort {
+
+    private final JpaPaisRepository jpaRepository;
+    private final PaisEntityMapper mapper;
+
+    @Override
+    @Cacheable(value = "paises", key = "#id")          // Caché de dos niveles
+    public Optional<Pais> getPorId(String id) {
+        return jpaRepository.findById(id)
+            .map(mapper::toDomain);
+    }
+
+    @Override
+    @Cacheable(value = "paises-page", key = "#paginacion")
+    public Pagina<Pais> getPaginados(Paginacion paginacion) {
+        var page = jpaRepository.findAll(
+            PageRequest.of(paginacion.pagina(), paginacion.tamanio()));
+        return mapper.toPage(page);
+    }
+}
+----
+
+[[liquibase]]
+=== Gestión de esquema con Liquibase
+
+Liquibase controla todas las modificaciones de esquema mediante *changelogs*
+versionados, garantizando reproducibilidad y trazabilidad:
+
+[source,text]
+----
+src/main/liquibase/
+├── db.changelog-master.xml         ← Incluye todos los changelogs en orden
+├── changelog/
+│   ├── ddl/
+│   │   ├── 001-ddl-create-comunidad-autonoma-table.xml
+│   │   ├── 002-ddl-create-provincia-table.xml
+│   │   ├── 003-ddl-create-localidad-table.xml
+│   │   ├── 004-ddl-create-tipo-via-table.xml
+│   │   └── 005-ddl-create-pais-table.xml
+│   └── dml/
+│       ├── 101-dml-load-comunidad-autonoma-data.xml  ← Datos iniciales desde CSV
+│       ├── 102-dml-load-provincia-data.xml
+│       ├── 103-dml-load-localidad-data.xml
+│       ├── 104-dml-load-tipo-via-data.xml
+│       └── 105-dml-load-pais-data.xml
+└── data/
+    ├── comunidades-autonomas.csv
+    ├── provincias.csv
+    ├── localidades.csv
+    ├── tipos-via.csv
+    └── paises.csv
+----
+
+TIP: Los prefijos numéricos `001-`, `002-`... garantizan el orden de aplicación
+independientemente del orden de inclusión en el changelog master. La separación
+DDL/DML facilita regenerar los datos sin recrear las tablas.

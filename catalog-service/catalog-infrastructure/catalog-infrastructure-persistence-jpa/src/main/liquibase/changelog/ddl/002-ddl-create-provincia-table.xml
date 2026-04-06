@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="002-create-provincia-table" author="liquibase" labels="ddl">
+        <createTable tableName="PROVINCIA">
+            <column name="ID" type="VARCHAR(2)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="DENOMINACION" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CA_ID" type="VARCHAR(2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <!-- Add foreign key constraint -->
+        <addForeignKeyConstraint
+            baseTableName="PROVINCIA"
+            baseColumnNames="CA_ID"
+            referencedTableName="COMUNIDAD_AUTONOMA"
+            referencedColumnNames="ID"
+            constraintName="FK_PROVINCIA_COMUNIDAD_AUTONOMA"/>
+            
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="PROVINCIA" constraintName="FK_PROVINCIA_COMUNIDAD_AUTONOMA"/>
+            <dropTable tableName="PROVINCIA"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

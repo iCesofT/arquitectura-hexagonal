@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="105-load-pais-data" author="liquibase" labels="data,dml">
+        <comment>Load pais data from CSV file</comment>
+        
+        <loadData
+            file="./data/paises.csv"
+            tableName="PAIS"
+            separator=";"
+            quotchar='"'
+            encoding="UTF-8">
+            
+            <column name="ID" type="STRING"/>
+            <column name="ALFA3" type="STRING"/>
+            <column name="ALFA2" type="STRING"/>
+            <column name="DENOMINACION" type="STRING"/>
+        </loadData>
+
+        <rollback>
+            <delete tableName="PAIS"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

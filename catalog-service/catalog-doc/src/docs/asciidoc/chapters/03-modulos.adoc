@@ -1,0 +1,259 @@
+[[modulos]]
+= Módulos Maven
+
+[[estructura-multimodulo]]
+== Estructura multi-módulo
+
+El proyecto utiliza un POM padre (`catalog-service`) que gestiona de forma
+centralizada versiones, dependencias y configuración de plugins para todos
+los submódulos.
+
+[source,text]
+----
+catalog-service/                          (POM padre)
+├── catalog-domain/                       (módulo de dominio)
+├── catalog-application/                  (módulo de aplicación)
+├── catalog-infrastructure/               (módulo de infraestructura — padre)
+│   ├── catalog-infrastructure-api-rest/
+│   ├── catalog-infrastructure-api-grpc/
+│   └── catalog-infrastructure-persistence-jpa/
+├── catalog-bootstrap/                    (módulo de arranque)
+└── catalog-doc/                          (módulo de documentación)
+----
+
+[[gestion-centralizada]]
+=== Gestión centralizada de versiones
+
+El POM padre define en `<dependencyManagement>` y `<pluginManagement>` *todas*
+las versiones de dependencias y plugins, garantizando coherencia y evitando
+conflictos entre módulos.
+
+[source,xml]
+----
+<!-- Fragmento del POM padre -->
+<properties>
+    <spring-boot.version>4.0.5</spring-boot.version>
+    <java.version>25</java.version>
+    <hibernate.version>7.2.4.Final</hibernate.version>
+    <caffeine.version>3.2.3</caffeine.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
+    <!-- ... -->
+</properties>
+----
+
+[[modulo-domain]]
+== catalog-domain
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Núcleo de la aplicación. Contiene el modelo de negocio puro, los puertos (interfaces) y las excepciones de dominio.
+
+| *Dependencias*
+| Únicamente Lombok (anotaciones en tiempo de compilación). Ninguna dependencia de framework.
+
+| *Empaquetado*
+| `jar`
+
+| *Paquete raíz*
+| `io.github.icesoft.catalog.domain`
+|===
+
+.Contenido del módulo
+[source,text]
+----
+catalog-domain/src/main/java/io/github/icesoft/catalog/domain/
+├── common/
+│   ├── event/
+│   │   └── DomainEvent.java          ← Marcador para eventos de dominio
+│   ├── exception/
+│   │   ├── DomainException.java      ← Base de todas las excepciones de dominio
+│   │   ├── ErrorType.java            ← Contrato de tipos de error
+│   │   ├── NotFoundException.java
+│   │   └── ValidationException.java
+│   └── model/
+│       ├── AggregateRoot.java        ← Base para agregados con eventos
+│       ├── Pagina.java               ← Resultado paginado genérico
+│       └── Paginacion.java           ← Parámetros de paginación
+├── pais/
+│   ├── model/Pais.java               ← Entidad de dominio (record)
+│   ├── port/repository/PaisRepositoryPort.java
+│   └── usecase/
+│       ├── GetPaisByIdUseCase.java
+│       └── GetPaginatedPaisesUseCase.java
+├── comunidadautonoma/ ...
+├── provincia/ ...
+├── localidad/ ...
+└── tipovia/ ...
+----
+
+[[modulo-application]]
+== catalog-application
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Orquestación de los casos de uso. Implementa los puertos de entrada del dominio coordinando los puertos de salida.
+
+| *Dependencias*
+| `catalog-domain`, Spring Validation, Spring Transaction
+
+| *Empaquetado*
+| `jar`
+
+| *Paquete raíz*
+| `io.github.icesoft.catalog.application`
+|===
+
+.Contenido del módulo
+[source,text]
+----
+catalog-application/src/main/java/io/github/icesoft/catalog/application/
+├── pais/
+│   ├── GetPaisByIdUseCaseImpl.java
+│   └── GetPaginatedPaisesUseCaseImpl.java
+├── localidad/
+│   ├── handler/
+│   │   ├── GetLocalidadByIdHandler.java       ← Patrón CQRS/Mediator
+│   │   └── GetPaginatedLocalidadesHandler.java
+│   └── query/
+│       ├── GetLocalidadByIdQuery.java
+│       └── GetPaginatedLocalidadesQuery.java
+├── mediator/
+│   ├── Mediator.java
+│   ├── SpringMediator.java
+│   ├── Request.java
+│   ├── RequestHandler.java
+│   ├── PipelineBehavior.java
+│   └── behaviors/
+│       ├── ValidationBehavior.java
+│       ├── LoggingBehavior.java
+│       └── DomainEventsBehavior.java
+└── event/
+    └── DomainEventCollector.java
+----
+
+[[modulo-infrastructure]]
+== catalog-infrastructure
+
+Módulo padre que agrupa los tres adaptadores técnicos, separando
+claramente las tecnologías de entrada (driving) de las de salida (driven).
+
+[[modulo-api-rest]]
+=== catalog-infrastructure-api-rest
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Adaptador REST. Expone la API HTTP mediante controladores generados desde la especificación OpenAPI.
+
+| *Dependencias*
+| `catalog-domain`, `catalog-application`, Spring Web, SpringDoc OpenAPI, MapStruct
+
+| *Generación de código*
+| `openapi-generator-maven-plugin` genera interfaces de controlador y DTOs en `generate-sources`
+|===
+
+[[modulo-api-grpc]]
+=== catalog-infrastructure-api-grpc
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Adaptador gRPC. Define los contratos de servicio en Protocol Buffers y genera los stubs Java.
+
+| *Dependencias*
+| `protobuf-java`, `grpc-protobuf`, `grpc-stub`, Spring gRPC
+
+| *Generación de código*
+| `protobuf-maven-plugin` genera clases Java a partir de los ficheros `.proto`
+|===
+
+[[modulo-persistence-jpa]]
+=== catalog-infrastructure-persistence-jpa
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Adaptador de persistencia. Implementa los puertos de repositorio del dominio usando JPA/Hibernate.
+
+| *Dependencias*
+| `catalog-domain`, Spring Data JPA, Hibernate 7, PostgreSQL driver, Caffeine, Redis, Liquibase
+
+| *Migraciones*
+| Liquibase gestiona el esquema DDL y la carga inicial de datos DML
+|===
+
+[[modulo-bootstrap]]
+== catalog-bootstrap
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Punto de entrada de la aplicación. Ensambla todos los módulos, contiene la configuración de Spring Boot y el `main`.
+
+| *Dependencias*
+| Todos los módulos del proyecto: `catalog-application`, `catalog-infrastructure-api-rest`, `catalog-infrastructure-persistence-jpa`
+
+| *Empaquetado*
+| `jar` ejecutable (fat jar con Spring Boot Maven Plugin)
+|===
+
+[[modulo-doc]]
+== catalog-doc
+
+[cols="1,3", options="header"]
+|===
+| Atributo | Detalle
+
+| *Responsabilidad*
+| Documentación técnica del proyecto en formato AsciiDoc. Genera artefactos HTML5 y PDF.
+
+| *Dependencias*
+| `asciidoctor-maven-plugin`, `asciidoctorj-pdf`, `asciidoctorj-diagram`
+
+| *Empaquetado*
+| `pom` (sin artefacto Java)
+
+| *Salida*
+| `target/docs/html/index.html` y `target/docs/pdf/index.pdf`
+|===
+
+[[grafo-dependencias]]
+== Grafo de dependencias entre módulos
+
+[source,text]
+----
+                    ┌────────────────┐
+                    │ catalog-domain │ (sin dependencias externas)
+                    └───────┬────────┘
+                            │ ←depende
+              ┌─────────────┴─────────────┐
+              │                           │
+     ┌────────┴─────────┐        ┌────────┴──────────────────┐
+     │catalog-application│        │  catalog-infrastructure   │
+     └────────┬─────────┘        │  (api-rest, api-grpc, jpa)│
+              │ ←depende          └────────┬──────────────────┘
+              └────────────┬──────────────┘
+                           │ ←depende
+                  ┌────────┴────────┐
+                  │catalog-bootstrap│
+                  └─────────────────┘
+----
+
+IMPORTANT: La dirección de las dependencias garantiza que el dominio nunca conoce
+los detalles de la infraestructura. Si el dominio necesita algo del exterior
+(como acceder a la base de datos), lo define como una interfaz (puerto) y la
+infraestructura la implementa (adaptador), invirtiendo la dependencia.

@@ -1,0 +1,83 @@
+paths:
+  /localidades:
+    get:
+      summary: Lista todas las Localidades
+      operationId: getLocalidades
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: Número de página (empezando desde 0)
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+          description: Número de items por página
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Término de búsqueda para filtrar por nombre de Localidad
+      responses:
+        '200':
+          description: Página de Localidades
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/LocalidadPageResult'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+  /localidades/{id}:
+    get:
+      summary: Obtiene el detalle de la Localidad
+      operationId: getLocalidadById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Código de la Localidad
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Detalle de la Localidad
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/LocalidadDetalle'
+        '404':
+          description: Localidad no encontrada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'

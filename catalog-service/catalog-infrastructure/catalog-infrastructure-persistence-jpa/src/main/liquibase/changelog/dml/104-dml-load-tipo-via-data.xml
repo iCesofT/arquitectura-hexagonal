@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="104-load-tipo-via-data" author="liquibase" labels="data,dml">
+        <comment>Carga inicial de datos de tipos de vía desde archivo CSV</comment>
+        
+        <loadData file="./data/tipos-via.csv" 
+                  tableName="TIPO_VIA"
+                  separator=","
+                  quotchar="&quot;"
+                  encoding="UTF-8">
+            <column name="ID" type="STRING"/>
+            <column name="CLAVE" type="STRING"/>
+            <column name="DENOMINACION" type="STRING"/>
+        </loadData>
+        
+        <rollback>
+            <delete tableName="TIPO_VIA"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

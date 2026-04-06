@@ -1,0 +1,23 @@
+PaisResumen:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Código ISO del País
+    nombre:
+      type: string
+      description: Denominación del País
+  required: [id, nombre]
+
+PaisDetalle:
+  allOf:
+    - $ref: '#/PaisResumen'
+    - type: object
+      properties:
+        isoAlfa2:
+          type: string
+          description: Código ISO Alfa-2 del País
+        isoAlfa3:
+          type: string
+          description: Código ISO Alfa-3 del País
+  required: [id, nombre, isoAlfa2, isoAlfa3]

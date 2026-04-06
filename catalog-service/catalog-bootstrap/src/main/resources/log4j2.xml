@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- Define pattern layouts -->
+        <Property name="LOG_PATTERN">%highlight{%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p} [%t] %-36.36c - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Console Appender with color highlighting -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!-- Async Appenders for better performance -->
+        <Async name="AsyncConsole" includeLocation="false">
+            <AppenderRef ref="Console"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="io.github.icesoft.catalog" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <!-- Spring Boot loggers -->
+        <Logger name="org.springframework.boot" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="org.hibernate.SQL" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+<!--
+        <Logger name="org.springframework.grpc" level="DEBUG" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+        <Logger name="io.grpc" level="DEBUG" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+        <Logger name="org.hibernate.orm.connections.pooling" level="DEBUG" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+-->
+
+        <!-- Async Root Logger for maximum performance -->
+        <AsyncRoot level="INFO" includeLocation="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </AsyncRoot>
+    </Loggers>
+</Configuration>

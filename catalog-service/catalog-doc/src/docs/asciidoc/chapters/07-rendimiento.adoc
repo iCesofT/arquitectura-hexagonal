@@ -1,0 +1,443 @@
+[[rendimiento]]
+= Optimizaciones de Rendimiento
+
+[[vision-rendimiento]]
+== Visión general
+
+El servicio incorpora múltiples capas de optimización de rendimiento,
+cada una dirigida a un cuello de botella diferente:
+
+[cols="1,2,2", options="header"]
+|===
+| Capa | Optimización | Impacto esperado
+
+| *Serialización*
+| Jackson Blackbird (bytecode)
+| 20-40% menos tiempo de serialización/deserialización
+
+| *Caché L1*
+| Caffeine (heap local)
+| Respuesta en microsegundos para datos calientes
+
+| *Caché L2*
+| Redis (distribuida)
+| Eliminación de queries a BD en entornos multi-instancia
+
+| *Conexiones BD*
+| HikariCP con parámetros optimizados
+| Reutilización de conexiones, mínima latencia de adquisición
+
+| *Concurrencia*
+| Virtual Threads (Java {java-version})
+| Throughput máximo con consumo mínimo de hilos del SO
+
+| *I/O HTTP*
+| HTTP/2 + compresión Gzip
+| Reducción de tamaño de respuesta y cabeceras
+
+| *Logging*
+| Log4j2 + LMAX Disruptor async
+| El logging no bloquea el hilo de petición
+|===
+
+[[cache-dos-niveles]]
+== Caché de dos niveles: Caffeine + Redis
+
+[[estrategia-cache]]
+=== Estrategia de caché multinivel
+
+La caché sigue una estrategia *read-through* en dos niveles:
+
+[source,text]
+----
+Petición
+   │
+   ▼
+┌──────────────────────────────────────────┐
+│         Caffeine Cache (L1)              │
+│   Heap JVM · hasta 10.000 entradas       │
+│   TTL: 5 minutos · Eviction: LFU         │
+│   Acceso: < 1 microsegundo               │
+└──────────────────────────────────────────┘
+   │ (miss L1)
+   ▼
+┌──────────────────────────────────────────┐
+│         Redis Cache (L2)                 │
+│   Distribuida · compartida entre pods    │
+│   TTL: 10 minutos · Serialización: JSON  │
+│   Acceso: < 1 milisegundo (red local)    │
+└──────────────────────────────────────────┘
+   │ (miss L2)
+   ▼
+┌──────────────────────────────────────────┐
+│         PostgreSQL                       │
+│   Fuente de verdad · Query con índice    │
+└──────────────────────────────────────────┘
+----
+
+[[configuracion-cache]]
+=== Configuración de la caché
+
+[source,java]
+----
+@Configuration
+@EnableCaching
+public class CacheConfiguration {
+
+    // --- Caffeine (L1: caché local en heap) ---
+    @Bean
+    public CaffeineSpec caffeineSpec() {
+        return CaffeineSpec.parse(
+            "maximumSize=10000," +
+            "expireAfterWrite=5m," +
+            "recordStats"           // Expone métricas para Micrometer
+        );
+    }
+
+    @Bean("caffeineCacheManager")
+    public CacheManager caffeineCacheManager(CaffeineSpec spec) {
+        return new CaffeineCacheManager() {{
+            setCaffeineSpec(spec);
+        }};
+    }
+
+    // --- Redis (L2: caché distribuida) ---
+    @Bean("redisCacheManager")
+    public RedisCacheManager redisCacheManager(
+            RedisConnectionFactory factory,
+            ObjectMapper objectMapper) {
+
+        var config = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofMinutes(10))
+            .serializeValuesWith(
+                RedisSerializationContext.SerializationPair.fromSerializer(
+                    new GenericJackson2JsonRedisSerializer(objectMapper)
+                ));
+
+        return RedisCacheManager.builder(factory)
+            .cacheDefaults(config)
+            .build();
+    }
+
+    // --- CompositeCacheManager (L1 primero, L2 como fallback) ---
+    @Primary
+    @Bean
+    public CacheManager compositeCacheManager(
+            @Qualifier("caffeineCacheManager") CacheManager l1,
+            @Qualifier("redisCacheManager")   CacheManager l2) {
+
+        var composite = new CompositeCacheManager(l1, l2);
+        composite.setFallbackToNoOpCache(true);  // No falla si Redis no está
+        return composite;
+    }
+}
+----
+
+[[ventajas-cache]]
+=== Ventajas del diseño de caché
+
+[cols="1,3", options="header"]
+|===
+| Ventaja | Descripción
+
+| *Resiliencia*
+| `fallbackToNoOpCache = true` evita que un fallo de Redis derrumbe el servicio.
+
+| *Coherencia de datos*
+| Los datos de catálogo son de baja volatilidad; TTLs cortos (5-10 min) son suficientes.
+
+| *Métricas*
+| Caffeine con `recordStats` expone hits/misses via Micrometer → Prometheus → Grafana.
+
+| *Multi-instancia*
+| L2 (Redis) comparte el caché entre todos los pods, evitando el cold-start en nuevas instancias.
+
+| *Sin anotación intrusiva*
+| `@Cacheable` se aplica en el adaptador de repositorio, manteniendo el dominio y la aplicación limpios.
+|===
+
+[[hikaricp]]
+== Pool de Conexiones HikariCP
+
+HikariCP es el pool de conexiones por defecto de Spring Boot, reconocido por
+ser el más rápido del ecosistema JVM.
+
+[[configuracion-hikaricp]]
+=== Configuración en `application.yaml`
+
+[source,yaml]
+----
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10          # Máximo de conexiones activas
+      minimum-idle: 2                # Conexiones mínimas en espera
+      connection-timeout: 30000      # 30 s antes de lanzar excepción
+      idle-timeout: 600000           # 10 min antes de cerrar conexión ociosa
+      max-lifetime: 1800000          # 30 min de vida máxima de una conexión
+      keepalive-time: 60000          # Mantiene activa la conexión con ping BD
+      pool-name: CatalogHikariPool   # Nombre visible en JMX/métricas
+      leak-detection-threshold: 5000 # Detecta conexiones no cerradas > 5 s
+      data-source-properties:
+        cachePrepStmts: true          # Caché de PreparedStatements en driver
+        prepStmtCacheSize: 250        # Tamaño del caché
+        prepStmtCacheSqlLimit: 2048   # Máximo tamaño de SQL en caché
+        useServerPrepStmts: true      # Usa PreparedStatements en el servidor
+----
+
+[[dimensionado-pool]]
+=== Dimensionado del pool
+
+El tamaño óptimo del pool **no es siempre el máximo posible**. La fórmula
+recomendada por el creador de HikariCP es:
+
+[source,text]
+----
+pool_size = (número_de_cores * 2) + número_de_discos_efectivos
+----
+
+Para un servicio de consultas (sin escrituras intensivas), con 2 cores:
+
+[source,text]
+----
+pool_size = (2 * 2) + 1 = 5  (desarrollo)
+pool_size = (4 * 2) + 1 = 9  (producción, redondeado a 10)
+----
+
+IMPORTANT: Un pool demasiado grande no mejora el rendimiento — al contrario,
+puede degradarlo por contención en el servidor de base de datos. El parámetro
+`maximum-pool-size: 10` corresponde a una configuración conservadora y correcta
+para este tipo de servicio de lectura.
+
+[[virtual-threads]]
+== Virtual Threads (Project Loom)
+
+[[que-son-virtual-threads]]
+=== ¿Qué son los Virtual Threads?
+
+Los *Virtual Threads* (introducidos en Java 21 como GA, mejorados en Java {java-version})
+son hilos ligeros gestionados por la JVM, no por el sistema operativo. Permiten
+ejecutar miles de tareas concurrentes bloqueantes sin el overhead de los hilos
+del SO.
+
+[cols="3,2,2", options="header"]
+|===
+| Característica | Hilos tradicionales (OS) | Virtual Threads (JVM)
+
+| *Memoria por hilo*
+| ~1 MB (stack fijo)
+| ~1 KB (stack dinámico)
+
+| *Creación*
+| Costosa (syscall)
+| Muy barata (nanosegundos)
+
+| *Bloqueo I/O*
+| Bloquea el hilo del SO
+| Desmonta el virtual thread; el carrier thread sigue libre
+
+| *Throughput*
+| Limitado por número de cores × 2
+| Miles de peticiones concurrentes con pocos cores
+
+| *Cambio de contexto*
+| Caro (kernel mode)
+| Barato (user mode, JVM)
+|===
+
+[[configuracion-virtual-threads]]
+=== Habilitación en Spring Boot
+
+[source,yaml]
+----
+spring:
+  threads:
+    virtual:
+      enabled: true    # Habilita virtual threads para Tomcat y tareas async
+----
+
+Con una sola línea de configuración, Spring Boot reemplaza automáticamente:
+
+* El thread pool de Tomcat por virtual threads
+* El `AsyncTaskExecutor` por un executor basado en virtual threads
+* Los scheduled tasks por virtual threads
+
+[[impacto-virtual-threads]]
+=== Impacto en catalog-service
+
+En un servicio de catálogo donde las operaciones son predominantemente
+*I/O bound* (consultas a BD, hits a Redis), los virtual threads son
+especialmente efectivos:
+
+[source,text]
+----
+Petición HTTP (virtual thread VT-1)
+   │
+   ├── @Cacheable → hit L1 Caffeine → respuesta inmediata
+   │
+   ├── @Cacheable → miss L1, hit L2 Redis → VT-1 se "parkea"
+   │   Carrier thread libre para atender VT-2, VT-3...
+   │   Cuando Redis responde → VT-1 se reanuda
+   │
+   └── miss L1 y L2 → query a PostgreSQL → VT-1 se "parkea"
+       Carrier thread libre para otras peticiones
+       Cuando BD responde → VT-1 se reanuda, escribe en caché
+----
+
+[[parametros-jvm]]
+== Parámetros de JVM
+
+[[jvm-en-contenedor]]
+=== JVM consciente del contenedor
+
+[source,dockerfile]
+----
+ENV JAVA_OPTS="\
+  -XX:+UseContainerSupport \
+  -XX:InitialRAMPercentage=50.0 \
+  -XX:MaxRAMPercentage=75.0 \
+  -XX:+UseZGC \
+  -XX:+ZGenerational \
+  -XX:+UseStringDeduplication \
+  -XX:MaxMetaspaceSize=256m \
+  -XX:+ExitOnOutOfMemoryError"
+----
+
+[cols="2,3", options="header"]
+|===
+| Parámetro | Propósito
+
+| `-XX:+UseContainerSupport`
+| La JVM respeta los límites de cgroup del contenedor en lugar de detectar la RAM del host.
+
+| `-XX:InitialRAMPercentage=50.0`
+| El heap inicial es el 50% de la RAM del contenedor, evitando un heap inicial demasiado pequeño que fuerza GC frecuentes al arrancar.
+
+| `-XX:MaxRAMPercentage=75.0`
+| El heap máximo es el 75% de la RAM disponible. El 25% restante es para metaspace, stack de hilos y buffers nativos.
+
+| `-XX:+UseZGC`
+| ZGC (Z Garbage Collector): GC de ultra-baja latencia con pausas < 1 ms, ideal para servicios REST con SLAs de latencia.
+
+| `-XX:+ZGenerational`
+| Activa el modo generacional de ZGC (Java 21+), mejorando el throughput del GC hasta un 30%.
+
+| `-XX:+UseStringDeduplication`
+| El GC identifica y deduplica cadenas iguales en el heap, reduciendo hasta un 10% el uso de memoria en servicios con muchas cadenas de texto (denominaciones, IDs).
+
+| `-XX:MaxMetaspaceSize=256m`
+| Límite al metaspace evita que crezca indefinidamente por carga dinámica de clases (especialmente relevante con generación de código en runtime: CGLIB, MapStruct).
+
+| `-XX:+ExitOnOutOfMemoryError`
+| Ante un OOM, la JVM termina inmediatamente. Kubernetes detectará el fallo y reiniciará el pod, en lugar de dejar el proceso en un estado corrupto.
+|===
+
+[[jackson-blackbird]]
+== Jackson Blackbird
+
+El módulo *Jackson Blackbird* reemplaza la reflexión Java en tiempo de
+ejecución por *bytecode generado dinámicamente*, reduciendo significativamente
+el tiempo de serialización/deserialización:
+
+[cols="2,2,2", options="header"]
+|===
+| Operación | Jackson estándar | Jackson Blackbird
+
+| Serialización
+| Reflexión por cada campo
+| Bytecode directo (como acceso campo)
+
+| Deserialización
+| `Method.invoke()` por setter
+| Invocación directa generada
+
+| Primer uso (warm-up)
+| Rápido
+| Ligeramente más lento (generación bytecode)
+
+| Uso en estado caliente
+| Baseline
+| ~20-40% más rápido
+|===
+
+[source,java]
+----
+@Bean
+public ObjectMapper objectMapper() {
+    return JsonMapper.builder()
+        .addModule(new BlackbirdModule())  // Habilita generación de bytecode
+        .build();
+}
+----
+
+WARNING: Blackbird requiere que la JVM tenga acceso para generar bytecode
+en el classloader de la aplicación. En módulos Java (JPMS) puede requerir
+configuración adicional de `--add-opens`.
+
+[[http2-compresion]]
+== HTTP/2 y Compresión
+
+[source,yaml]
+----
+server:
+  http2:
+    enabled: true          # Multiplexación de peticiones en una sola conexión TCP
+  compression:
+    enabled: true
+    mime-types:
+      - application/json
+      - application/problem+json
+    min-response-size: 1024 # Sólo comprimir respuestas > 1KB
+----
+
+[cols="1,3", options="header"]
+|===
+| Mejora | Impacto
+
+| *HTTP/2*
+| Multiplexación: múltiples peticiones en una sola conexión TCP, eliminando el overhead de conexión.
+
+| *Header Compression (HPACK)*
+| Las cabeceras HTTP/2 se comprimen, especialmente beneficioso en APIs REST con muchas cabeceras repetidas.
+
+| *Gzip*
+| Respuestas JSON reducidas entre un 60-80% en tamaño, ahorrando ancho de banda y tiempo de transferencia.
+|===
+
+[[logging-asincrono]]
+== Logging Asíncrono con LMAX Disruptor
+
+Log4j2 con el `disruptor` de LMAX permite que el logging sea *100% asíncrono*:
+los mensajes de log se encolan en un *ring buffer* lock-free y un hilo dedicado
+los escribe en disco, sin bloquear nunca el hilo de la petición.
+
+[source,xml]
+----
+<!-- log4j2.xml -->
+<Configuration status="WARN">
+    <Appenders>
+        <Async name="AsyncConsole">   <!-- Ring buffer: 262.144 slots por defecto -->
+            <AppenderRef ref="Console"/>
+        </Async>
+    </Appenders>
+</Configuration>
+----
+
+[source,yaml]
+----
+# pom.xml — dependencia del Disruptor
+<dependency>
+    <groupId>com.lmax</groupId>
+    <artifactId>disruptor</artifactId>
+    <version>4.0.0</version>
+</dependency>
+----
+
+CAUTION: Con logging completamente asíncrono, ante un crash de la JVM pueden
+perderse los últimos mensajes en el buffer. Para depuración de fallos críticos,
+se puede habilitar temporalmente el modo síncrono sin cambiar código:
+
+[source,bash]
+----
+-Dlog4j2.contextSelector=org.apache.logging.log4j.core.selector.BasicContextSelector
+----

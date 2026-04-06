@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package io.github.icesoft.catalog.infrastructure.api.grpc;
+
+option java_multiple_files = true;
+option java_package = "io.github.icesoft.catalog.infrastructure.api.grpc";
+
+message TipoViaResumen {
+  string id = 1;
+  string nombre = 2;
+}
+
+message TipoViaDetalle {
+  string id = 1;
+  string nombre = 2;
+  repeated string denominacion = 3;
+}
+
+message ListTiposViaRequest {
+  string lang = 1;
+}
+
+message ListTiposViaResponse {
+  repeated TipoViaResumen items = 1;
+}
+
+message GetTipoViaByIdRequest {
+  string id = 1;
+  string lang = 2;
+}
+
+service TipoViaService {
+  rpc ListTiposVia(ListTiposViaRequest) returns (ListTiposViaResponse);
+  rpc GetTipoViaById(GetTipoViaByIdRequest) returns (TipoViaDetalle);
+}
+

@@ -1,0 +1,23 @@
+TipoViaResumen:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Código de Tipo de Vía
+    nombre:
+      type: string
+      description: Clave de Vía
+  required: [id, nombre]
+
+TipoViaDetalle:
+  allOf:
+    - $ref: '#/TipoViaResumen'
+    - type: object
+      properties:
+        denominacion:
+          type: array
+          description: Denominaciones del Tipo de Vía
+          items:
+            type: string
+      required: [id, nombre, denominacion]
+

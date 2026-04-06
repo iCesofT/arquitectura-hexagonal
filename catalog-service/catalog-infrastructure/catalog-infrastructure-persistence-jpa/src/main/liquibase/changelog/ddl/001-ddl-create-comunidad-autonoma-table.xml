@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd">
+
+    <changeSet id="001-create-comunidad-autonoma-table" author="liquibase" labels="ddl">
+        <createTable tableName="COMUNIDAD_AUTONOMA">
+            <column name="ID" type="VARCHAR(2)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="DENOMINACION" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="RCP" type="VARCHAR(2)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="DIR2" type="VARCHAR(2)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <rollback>
+            <dropTable tableName="COMUNIDAD_AUTONOMA"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,53 @@
+ID,DENOMINACION,CA_ID
+01,Álava,16
+02,Albacete,08
+03,Alacant/Alicante,10
+04,Almería,01
+05,Ávila,07
+06,Badajoz,11
+07,Illes Balears,04
+08,Barcelona,09
+09,Burgos,07
+10,Cáceres,11
+11,Cádiz,01
+12,Castelló/Castellón,10
+13,Ciudad Real,08
+14,Córdoba,01
+15,A Coruña,12
+16,Cuenca,08
+17,Girona,09
+18,Granada,01
+19,Guadalajara,08
+20,Guipúzcoa,16
+21,Huelva,01
+22,Huesca,02
+23,Jaén,01
+24,León,07
+25,Lleida,09
+26,La Rioja,17
+27,Lugo,12
+28,Madrid,13
+29,Málaga,01
+30,Murcia,14
+31,Navarra,15
+32,Ourense,12
+33,Asturias,03
+34,Palencia,07
+35,Las Palmas,05
+36,Pontevedra,12
+37,Salamanca,07
+38,Santa Cruz de Tenerife,05
+39,Cantabria,06
+40,Segovia,07
+41,Sevilla,01
+42,Soria,07
+43,Tarragona,09
+44,Teruel,02
+45,Toledo,08
+46,València/Valencia,10
+47,Valladolid,07
+48,Vizcaya,16
+49,Zamora,07
+50,Zaragoza,02
+51,Ceuta,18
+52,Melilla,19

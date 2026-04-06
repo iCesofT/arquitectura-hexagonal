@@ -1,0 +1,212 @@
+[[capa-dominio]]
+= Capa de Dominio
+
+[[proposito-dominio]]
+== Propósito
+
+La capa de dominio es el núcleo del hexágono. Contiene *exclusivamente* lógica
+de negocio: entidades, reglas de validación, contratos de repositorio (puertos
+de salida) y contratos de casos de uso (puertos de entrada).
+
+.Principio clave
+[NOTE]
+====
+El módulo `catalog-domain` no tiene ninguna dependencia de framework.
+No importa Spring, JPA, Jackson ni ninguna otra librería de infraestructura.
+Esto garantiza que las reglas de negocio son estables, portables y fácilmente
+testeables en aislamiento.
+====
+
+[[entidades-dominio]]
+== Entidades de dominio
+
+Todas las entidades están implementadas como *Java records*, lo que garantiza:
+
+* *Inmutabilidad* — Los registros son inherentemente inmutables, evitando estados inconsistentes.
+* *Validación en construcción* — El constructor compacto valida invariantes de dominio.
+* *Código conciso* — Reducción de boilerplate sin perder expresividad.
+
+[[jerarquia-entidades]]
+=== Jerarquía de entidades geográficas
+
+[source,text]
+----
+Pais                         ← Entidad independiente
+ComunidadAutonoma            ← Entidad independiente
+  └── Provincia              ← Hace referencia a ComunidadAutonoma
+        └── Localidad        ← Hace referencia a Provincia
+TipoVia                      ← Entidad independiente (catálogo)
+----
+
+[[entidad-pais]]
+=== Entidad `Pais`
+
+[source,java]
+----
+public record Pais(String id, String denominacion) {
+    public Pais {
+        Objects.requireNonNull(id, "El id del país no puede ser nulo");
+        Objects.requireNonNull(denominacion, "La denominación no puede ser nula");
+        if (id.isBlank())
+            throw new ValidationException(PaisErrorType.ID_REQUERIDO);
+        if (denominacion.isBlank())
+            throw new ValidationException(PaisErrorType.DENOMINACION_REQUERIDA);
+    }
+}
+----
+
+Las mismas reglas de validación se aplican a todas las entidades:
+`ComunidadAutonoma`, `Provincia`, `Localidad` y `TipoVia`.
+
+[[modelo-paginacion]]
+=== Modelo de paginación
+
+[source,java]
+----
+// Parámetros de entrada de paginación
+public record Paginacion(int page, int size) { }
+
+// Resultado paginado genérico
+public record Pagina<T>(
+    List<T> contenido,
+    long totalElementos,
+    int totalPaginas,
+    int numeroPagina,
+    int tamanio
+) {
+    public boolean esUltimaPagina() { return numeroPagina >= totalPaginas - 1; }
+    public boolean esPrimeraPagina() { return numeroPagina == 0; }
+}
+----
+
+[[aggregate-root]]
+=== AggregateRoot
+
+La clase base `AggregateRoot` implementa el patrón de *Domain Events*,
+permitiendo que los agregados publiquen eventos que son procesados
+posteriormente por la capa de aplicación:
+
+[source,java]
+----
+public abstract class AggregateRoot {
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+
+    protected void registerEvent(DomainEvent event) {
+        domainEvents.add(event);
+    }
+
+    public List<DomainEvent> pullDomainEvents() {
+        var events = new ArrayList<>(domainEvents);
+        domainEvents.clear();   // pull = consume-and-clear
+        return events;
+    }
+}
+----
+
+[[puertos-dominio]]
+== Puertos del dominio
+
+[[puertos-entrada]]
+=== Puertos de entrada (casos de uso)
+
+Los puertos de entrada son interfaces que definen *qué* puede hacer la aplicación.
+Son implementados por la capa de aplicación e invocados por los adaptadores primarios.
+
+[source,java]
+----
+// Puerto de entrada — define el contrato de un caso de uso
+public interface GetPaisByIdUseCase {
+    Pais getPorId(String id);
+}
+
+public interface GetPaginatedPaisesUseCase {
+    Pagina<Pais> getPaginados(Paginacion paginacion);
+}
+----
+
+El mismo patrón se repite para todas las entidades del catálogo:
+
+[cols="2,2", options="header"]
+|===
+| Entidad | Puertos de entrada
+
+| `Pais`
+| `GetPaisByIdUseCase`, `GetPaginatedPaisesUseCase`
+
+| `ComunidadAutonoma`
+| `GetComunidadAutonomaByIdUseCase`, `GetPaginatedComunidadesAutonomasUseCase`
+
+| `Provincia`
+| `GetProvinciaByIdUseCase`, `GetPaginatedProvinciasUseCase`
+
+| `Localidad`
+| `GetLocalidadByIdUseCase`, `GetPaginatedLocalidadesUseCase`
+
+| `TipoVia`
+| `GetTipoViaByIdUseCase`, `GetPaginatedTiposViaUseCase`
+|===
+
+[[puertos-salida]]
+=== Puertos de salida (repositorios)
+
+Los puertos de salida son interfaces que definen *qué* necesita el dominio
+del exterior. Son implementados por los adaptadores secundarios (infraestructura).
+
+[source,java]
+----
+// Puerto de salida — define qué necesita el dominio para funcionar
+public interface PaisRepositoryPort {
+    Optional<Pais> getPorId(String id);
+    Pagina<Pais> getPaginados(Paginacion paginacion);
+}
+----
+
+[[excepciones-dominio]]
+== Excepciones de dominio
+
+El dominio define su propia jerarquía de excepciones, desacoplada de las
+excepciones HTTP o de infraestructura:
+
+[source,text]
+----
+DomainException (base)
+├── NotFoundException      ← HTTP 404 en el adaptador REST
+└── ValidationException    ← HTTP 422 en el adaptador REST
+----
+
+Cada tipo de error se define como una implementación de la interfaz `ErrorType`:
+
+[source,java]
+----
+public interface ErrorType {
+    HttpStatus getStatus();     // semántica HTTP (mapeada en el adaptador)
+    String getTitle();          // título legible por humanos
+    String getDetailTemplate(); // plantilla del mensaje con {0}, {1}...
+}
+----
+
+Esto permite que los adaptadores REST conviertan las excepciones de dominio
+en respuestas `RFC 9457 Problem Detail` sin que el dominio sepa nada de HTTP.
+
+[[principios-clean-code-dominio]]
+== Principios Clean Code aplicados
+
+[cols="1,3", options="header"]
+|===
+| Principio | Aplicación
+
+| *Fail Fast*
+| Las entidades validan sus invariantes en el constructor. Un objeto inválido no puede existir.
+
+| *Nombres expresivos*
+| `getPorId`, `getPaginados`, `pullDomainEvents` — nombres que comunican intención, no implementación.
+
+| *Records para Value Objects*
+| Java records para entidades de datos puros: inmutabilidad garantizada por el lenguaje.
+
+| *Separación de responsabilidades*
+| Las excepciones de dominio no contienen lógica HTTP; los adaptadores hacen la traducción.
+
+| *Interfaces pequeñas (ISP)*
+| Cada caso de uso es una interfaz separada con un único método. No hay interfaces «dios».
+|===

@@ -1,0 +1,15 @@
+PageResult:
+  type: object
+  properties:
+    items:
+      type: array
+      description: List of items in the current page
+    page:
+      type: integer
+      description: Current page number
+    size:
+      type: integer
+      description: Number of items per page
+    totalItems:
+      type: integer
+      description: Total number of items across all pages

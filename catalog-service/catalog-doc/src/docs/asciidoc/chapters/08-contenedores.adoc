@@ -1,0 +1,278 @@
+[[contenedores]]
+= Contenedores y Despliegue
+
+[[dockerfile-multistage]]
+== Dockerfile Multi-Stage
+
+El `Dockerfile` utiliza una construcción en *dos etapas* (multi-stage build),
+separando el entorno de compilación del entorno de ejecución:
+
+[source,dockerfile]
+----
+# =============================================
+# ETAPA 1: BUILDER
+# Imagen completa de JDK para compilar y extraer capas
+# =============================================
+FROM eclipse-temurin:25-jdk-alpine AS builder
+
+WORKDIR /app
+
+# Copia el fat jar generado por Spring Boot Maven Plugin
+COPY target/*.jar app.jar
+
+# Extrae las capas del fat jar para optimizar el cache de Docker
+RUN java -Djarmode=layertools -jar app.jar extract
+
+# =============================================
+# ETAPA 2: RUNTIME
+# Imagen mínima con sólo JRE (sin herramientas de compilación)
+# =============================================
+FROM eclipse-temurin:25-jre-alpine
+
+# Usuario no root — buena práctica de seguridad
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+WORKDIR /app
+
+# Copia las capas en orden de menor a mayor frecuencia de cambio
+# → Maximiza la reutilización del cache de capas Docker
+COPY --from=builder /app/dependencies/ ./
+COPY --from=builder /app/spring-boot-loader/ ./
+COPY --from=builder /app/snapshot-dependencies/ ./
+COPY --from=builder /app/application/ ./
+
+# Parámetros JVM optimizados para contenedor
+ENV JAVA_OPTS="\
+  -XX:+UseContainerSupport \
+  -XX:InitialRAMPercentage=50.0 \
+  -XX:MaxRAMPercentage=75.0 \
+  -XX:+UseZGC \
+  -XX:+ZGenerational \
+  -XX:+UseStringDeduplication \
+  -XX:MaxMetaspaceSize=256m \
+  -XX:+ExitOnOutOfMemoryError"
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
+----
+
+[[spring-layertools]]
+=== Spring Boot Layertools
+
+`jarmode=layertools` extrae el fat jar en capas ordenadas por *frecuencia de cambio*:
+
+[source,text]
+----
+Capas (de menor a mayor frecuencia de cambio):
+┌─────────────────────────────────────────────────────────────┐
+│  dependencies/          ← Jars de terceros (cambian poco)   │
+├─────────────────────────────────────────────────────────────┤
+│  spring-boot-loader/    ← Loader de Spring Boot (raramente) │
+├─────────────────────────────────────────────────────────────┤
+│  snapshot-dependencies/ ← Dependencias SNAPSHOT (dev)       │
+├─────────────────────────────────────────────────────────────┤
+│  application/           ← Código del proyecto (cambia más)  │
+└─────────────────────────────────────────────────────────────┘
+----
+
+.Beneficio del layering
+[NOTE]
+====
+En un ciclo de desarrollo típico sólo cambia la capa `application/`.
+Docker reutiliza las tres capas inferiores del caché, reduciendo el tiempo
+de build y el ancho de banda de push al registry de ~200 MB a ~5-10 MB.
+====
+
+[[imagen-alpine]]
+=== Imagen base Alpine
+
+[cols="2,1,3", options="header"]
+|===
+| Imagen base | Tamaño aproximado | Ventaja
+
+| `eclipse-temurin:25-jdk`
+| ~600 MB
+| Compilación (sólo en stage builder)
+
+| `eclipse-temurin:25-jre-alpine`
+| ~180 MB
+| Ejecución — Alpine elimina herramientas innecesarias
+
+| `distroless`
+| ~60 MB
+| Alternativa más segura (sin shell)
+|===
+
+Alpine reduce significativamente la superficie de ataque al eliminar
+utilidades de sistema que no son necesarias en producción.
+
+[[seguridad-contenedor]]
+=== Seguridad del contenedor
+
+[source,dockerfile]
+----
+# Usuario no-root explícito
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+----
+
+[cols="1,3", options="header"]
+|===
+| Medida de seguridad | Descripción
+
+| *Usuario no root*
+| El proceso Java se ejecuta como `appuser` (uid > 1000), no como root. Limita el impacto de una vulnerabilidad RCE.
+
+| *Imagen mínima*
+| Alpine JRE sin compilador, sin curl, sin wget, sin herramientas de diagnóstico por defecto.
+
+| *Sin secrets en imagen*
+| Las credenciales (BD, Redis) se pasan como variables de entorno en tiempo de ejecución, no en la imagen.
+
+| *OWASP Dependency-Check*
+| El perfil `owasp` en Maven escanea las dependencias en busca de CVEs conocidas antes de empaquetar.
+|===
+
+[[docker-compose]]
+== Docker Compose
+
+El fichero `docker-compose.yml` levanta el stack completo para desarrollo local:
+
+[source,yaml]
+----
+services:
+
+  backend:
+    image: catalog-service:latest
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/catalog
+      SPRING_DATASOURCE_USERNAME: catalog
+      SPRING_DATASOURCE_PASSWORD: catalog
+      SPRING_DATA_REDIS_HOST: cache
+      SPRING_DATA_REDIS_PORT: 6379
+      # Pool de conexiones (sobrescribe application.yaml)
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 5
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - catalog-network
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider",
+             "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: catalog
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: catalog
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - catalog-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalog -d catalog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cache:
+    image: redis:8.0-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - catalog-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  catalog-network:
+    driver: bridge
+----
+
+[[health-checks]]
+=== Health Checks
+
+Todos los servicios tienen *health checks* configurados:
+
+[cols="1,2,2", options="header"]
+|===
+| Servicio | Health Check | Propósito
+
+| `backend`
+| `GET /actuator/health`
+| Verifica que Spring Boot está listo (BD + Redis conectados)
+
+| `database`
+| `pg_isready`
+| Verifica que PostgreSQL acepta conexiones
+
+| `cache`
+| `redis-cli ping`
+| Verifica que Redis responde
+|===
+
+La directiva `depends_on` con `condition: service_healthy` garantiza que
+el backend no arranca hasta que BD y Redis estén completamente operativos,
+evitando fallos de arranque por *race conditions*.
+
+[[resource-limits]]
+=== Límites de recursos
+
+[source,yaml]
+----
+deploy:
+  resources:
+    limits:
+      memory: 512m   # Acota el heap + metaspace + buffers nativos
+      cpus: "1.0"    # Limita el número de CPUs disponibles para el contenedor
+----
+
+Los límites de recursos en Docker Compose simulan las restricciones de
+un entorno Kubernetes real (`resources.limits`), validando que la configuración
+JVM (`-XX:MaxRAMPercentage=75.0`) es coherente con la memoria asignada.
+
+[[perfil-cockroach]]
+=== Perfil CockroachDB
+
+El proyecto incluye un perfil alternativo (`application-cockroach.yaml`)
+para usar *CockroachDB* como base de datos distribuida compatible con PostgreSQL:
+
+[source,bash]
+----
+# Arrancar con perfil CockroachDB
+SPRING_PROFILES_ACTIVE=cockroach docker-compose -f docker-compose.cockroach.yml up
+----
+
+Esto demuestra la *portabilidad de la arquitectura hexagonal*: cambiar de motor
+de base de datos sólo requiere cambiar el adaptador de infraestructura y la
+configuración, sin tocar el dominio ni la aplicación.

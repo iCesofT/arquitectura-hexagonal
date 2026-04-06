@@ -1,0 +1,65 @@
+paths:
+  /tipos-via:
+    get:
+      summary: Lista todos los Tipos de Vía
+      operationId: getTiposVia
+      parameters:
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Lista de Tipos de Vía
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './entities.yaml#/TipoViaResumen'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+  /tipos-via/{id}:
+    get:
+      summary: Obtiene el detalle del Tipo de Vía
+      operationId: getTipoViaById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Código del Tipo de Vía
+        - name: lang
+          in: query
+          required: true
+          schema:
+            type: string
+            default: es
+          description: Código de Idioma
+      responses:
+        '200':
+          description: Detalle del Tipo de Vía
+          content:
+            application/json:
+              schema:
+                $ref: './entities.yaml#/TipoViaDetalle'
+        '404':
+          description: Tipo de Vía no encontrada
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'
+        '500':
+          description: Internal server error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../components/problem-detail.yaml'

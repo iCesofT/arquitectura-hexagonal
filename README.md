@@ -262,7 +262,7 @@ cd testing && ./run-loadtest-rest.sh
 cd testing && ./run-loadtest-grpc.sh
 ```
 
-## 🐳 Containerización
+## 🐳 Contenerización
 
 ### Docker Compose Completo
 
@@ -271,17 +271,17 @@ cd testing && ./run-loadtest-grpc.sh
 docker-compose up -d
 
 # Solo infraestructura
-docker-compose up -d postgres redis
+docker-compose up -d database cache
 ```
 
 ### Build de Imagen Docker
 
 ```bash
-# Construir imagen
-docker build -t catalog-service:latest .
+# Asegurarse de tener el fat-jar
+./mvnw clean package
 
-# Ejecutar contenedor
-docker run -p 8080:8080 catalog-service:latest
+# Construir imagen
+docker compose build backend
 ```
 
 ## 📈 Monitorización

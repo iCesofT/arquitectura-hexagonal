@@ -99,7 +99,6 @@ El servicio gestiona las siguientes entidades geográficas siguiendo estándares
 ### Testing
 - **JUnit**: 5+ con Platform Suite
 - **Cucumber**: 7.34.3 para BDD
-- **Testcontainers**: 1.21.0 para tests de integración
 - **AssertJ**: Para assertions fluidas
 
 ### Observabilidad

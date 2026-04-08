@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 /**
- * Entidad JPA que representa la tabla PAIS en la base de datos.
- * Mapea los datos de países con sus códigos ISO estándar para integración
- * con sistemas externos y normalización de datos geográficos.
+ * Entidad JPA que representa la tabla PAIS en la base de datos. Mapea los datos
+ * de países con sus códigos ISO estándar para integración con sistemas externos
+ * y normalización de datos geográficos.
  * 
- * <p>Incluye índices únicos en los códigos ALFA2 y ALFA3 para garantizar
- * integridad referencial y optimizar búsquedas por código ISO.</p>
+ * <p>
+ * Incluye índices únicos en los códigos ALFA2 y ALFA3 para garantizar
+ * integridad referencial y optimizar búsquedas por código ISO.
+ * </p>
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

@@ -4,15 +4,20 @@ import io.github.icesoft.catalog.domain.comunidadautonoma.model.ComunidadAutonom
 import java.util.Objects;
 
 /**
- * Entidad de dominio que representa una Provincia española.
- * Cada provincia pertenece a una comunidad autónoma específica.
+ * Entidad de dominio que representa una Provincia española. Cada provincia
+ * pertenece a una comunidad autónoma específica.
  * 
- * @param id Identificador único de la provincia
- * @param nombre Nombre oficial de la provincia
- * @param comunidadAutonoma Comunidad autónoma a la que pertenece esta provincia
+ * @param id
+ *            Identificador único de la provincia
+ * @param nombre
+ *            Nombre oficial de la provincia
+ * @param comunidadAutonoma
+ *            Comunidad autónoma a la que pertenece esta provincia
  * 
- * @throws NullPointerException si algún parámetro requerido es nulo
- * @throws IllegalArgumentException si id o nombre están vacíos
+ * @throws NullPointerException
+ *             si algún parámetro requerido es nulo
+ * @throws IllegalArgumentException
+ *             si id o nombre están vacíos
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

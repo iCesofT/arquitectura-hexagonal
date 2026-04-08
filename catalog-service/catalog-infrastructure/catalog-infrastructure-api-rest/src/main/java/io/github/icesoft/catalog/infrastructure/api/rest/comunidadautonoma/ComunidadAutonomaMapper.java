@@ -9,9 +9,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
- * Mapper para transformaciones entre entidades de dominio ComunidadAutonoma y DTOs de la API REST.
- * Utiliza MapStruct para generar automáticamente las implementaciones de mapeo.
- * Maneja la conversión de códigos administrativos españoles RCP y DIR2.
+ * Mapper para transformaciones entre entidades de dominio ComunidadAutonoma y
+ * DTOs de la API REST. Utiliza MapStruct para generar automáticamente las
+ * implementaciones de mapeo. Maneja la conversión de códigos administrativos
+ * españoles RCP y DIR2.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

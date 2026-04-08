@@ -7,9 +7,9 @@ import io.github.icesoft.catalog.domain.comunidadautonoma.usecase.GetComunidadAu
 import org.springframework.stereotype.Service;
 
 /**
- * Implementación del caso de uso para obtener una comunidad autónoma por identificador.
- * Coordina la consulta con el puerto de repositorio y maneja la lógica de error
- * cuando la comunidad autónoma no existe.
+ * Implementación del caso de uso para obtener una comunidad autónoma por
+ * identificador. Coordina la consulta con el puerto de repositorio y maneja la
+ * lógica de error cuando la comunidad autónoma no existe.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -22,7 +22,9 @@ public class GetComunidadAutonomaByIdUseCaseImpl implements GetComunidadAutonoma
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param comunidadAutonomaDao Puerto de repositorio para operaciones de persistencia de comunidades autónomas
+	 * @param comunidadAutonomaDao
+	 *            Puerto de repositorio para operaciones de persistencia de
+	 *            comunidades autónomas
 	 */
 	public GetComunidadAutonomaByIdUseCaseImpl(ComunidadAutonomaRepositoryPort comunidadAutonomaDao) {
 		this.repository = comunidadAutonomaDao;

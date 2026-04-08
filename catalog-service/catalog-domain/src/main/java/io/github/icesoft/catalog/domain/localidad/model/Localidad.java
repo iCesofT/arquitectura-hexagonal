@@ -4,15 +4,20 @@ import io.github.icesoft.catalog.domain.provincia.model.Provincia;
 import java.util.Objects;
 
 /**
- * Entidad de dominio que representa una Localidad española.
- * Cada localidad pertenece a una provincia específica.
+ * Entidad de dominio que representa una Localidad española. Cada localidad
+ * pertenece a una provincia específica.
  * 
- * @param id Identificador único de la localidad
- * @param nombre Nombre oficial de la localidad
- * @param provincia Provincia a la que pertenece esta localidad
+ * @param id
+ *            Identificador único de la localidad
+ * @param nombre
+ *            Nombre oficial de la localidad
+ * @param provincia
+ *            Provincia a la que pertenece esta localidad
  * 
- * @throws NullPointerException si algún parámetro requerido es nulo
- * @throws IllegalArgumentException si id o nombre están vacíos
+ * @throws NullPointerException
+ *             si algún parámetro requerido es nulo
+ * @throws IllegalArgumentException
+ *             si id o nombre están vacíos
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

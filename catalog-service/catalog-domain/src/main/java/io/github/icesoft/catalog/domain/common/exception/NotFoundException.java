@@ -1,8 +1,8 @@
 package io.github.icesoft.catalog.domain.common.exception;
 
 /**
- * Excepción lanzada cuando no se encuentra un recurso solicitado.
- * Representa errores HTTP 404 en el contexto del dominio.
+ * Excepción lanzada cuando no se encuentra un recurso solicitado. Representa
+ * errores HTTP 404 en el contexto del dominio.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -12,7 +12,8 @@ public class NotFoundException extends DomainException {
 	/**
 	 * Constructor para recursos no encontrados con identificador.
 	 * 
-	 * @param identifier Identificador del recurso no encontrado
+	 * @param identifier
+	 *            Identificador del recurso no encontrado
 	 */
 	public NotFoundException(String identifier) {
 		super(new ErrorType() {
@@ -36,8 +37,10 @@ public class NotFoundException extends DomainException {
 	/**
 	 * Constructor para recursos no encontrados con mensaje personalizado.
 	 * 
-	 * @param message Mensaje personalizado de error
-	 * @param identifier Identificador del recurso no encontrado
+	 * @param message
+	 *            Mensaje personalizado de error
+	 * @param identifier
+	 *            Identificador del recurso no encontrado
 	 */
 	public NotFoundException(String message, String identifier) {
 		super(new ErrorType() {

@@ -8,15 +8,20 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
- * Mapper para transformaciones entre entidades de dominio TipoVia y DTOs de la API REST.
- * Utiliza MapStruct para generar automáticamente las implementaciones de mapeo.
+ * Mapper para transformaciones entre entidades de dominio TipoVia y DTOs de la
+ * API REST. Utiliza MapStruct para generar automáticamente las implementaciones
+ * de mapeo.
  * 
- * <p><strong>Nota importante sobre mapeo de campos:</strong><br>
- * En la API REST, el campo "nombre" representa la clave/abreviatura del tipo de vía,
- * mientras que "denominacion" representa el nombre completo. Esta convención se mantiene
- * por compatibilidad con sistemas externos.</p>
+ * <p>
+ * <strong>Nota importante sobre mapeo de campos:</strong><br>
+ * En la API REST, el campo "nombre" representa la clave/abreviatura del tipo de
+ * vía, mientras que "denominacion" representa el nombre completo. Esta
+ * convención se mantiene por compatibilidad con sistemas externos.
+ * </p>
  * 
- * <p>Mapeo de campos:</p>
+ * <p>
+ * Mapeo de campos:
+ * </p>
  * <ul>
  * <li>Dominio.abreviatura → API.nombre (clave corta)</li>
  * <li>Dominio.nombre → API.denominacion (nombre completo)</li>
@@ -29,10 +34,11 @@ import org.mapstruct.MappingConstants;
 public interface TipoViaMapper {
 
 	/**
-	 * Convierte un TipoVia del dominio a DTO de resumen para la API REST.
-	 * El campo "nombre" del DTO corresponde a la abreviatura (clave) del dominio.
+	 * Convierte un TipoVia del dominio a DTO de resumen para la API REST. El campo
+	 * "nombre" del DTO corresponde a la abreviatura (clave) del dominio.
 	 * 
-	 * @param tipoVia Entidad de dominio a convertir
+	 * @param tipoVia
+	 *            Entidad de dominio a convertir
 	 * @return DTO de resumen para respuesta de la API
 	 */
 	@Mapping(target = "nombre", source = "abreviatura")

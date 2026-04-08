@@ -5,12 +5,14 @@ import io.github.icesoft.catalog.infrastructure.api.common.config.PaginationConf
 import org.springframework.stereotype.Component;
 
 /**
- * Utilidad para mapeo y validación de parámetros de paginación.
- * Aplica la configuración centralizada de paginación y valida límites
- * para prevenir solicitudes abusivas.
+ * Utilidad para mapeo y validación de parámetros de paginación. Aplica la
+ * configuración centralizada de paginación y valida límites para prevenir
+ * solicitudes abusivas.
  * 
- * <p>Centraliza la lógica de construcción de objetos Paginacion aplicando
- * valores por defecto y límites máximos configurados.</p>
+ * <p>
+ * Centraliza la lógica de construcción de objetos Paginacion aplicando valores
+ * por defecto y límites máximos configurados.
+ * </p>
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -23,7 +25,8 @@ public class PaginacionMapper {
 	/**
 	 * Constructor que inyecta la configuración de paginación.
 	 * 
-	 * @param paginationConfig Configuración de parámetros de paginación
+	 * @param paginationConfig
+	 *            Configuración de parámetros de paginación
 	 */
 	public PaginacionMapper(PaginationConfig paginationConfig) {
 		this.paginationConfig = paginationConfig;

@@ -11,8 +11,9 @@ import org.springframework.context.event.EventListener;
 
 /**
  * Clase principal de la aplicación Spring Boot para el servicio de catálogo.
- * Configura el auto-escaneo de componentes y maneja el arranque de la aplicación.
- * Registra información de versión y build al inicializar el contexto.
+ * Configura el auto-escaneo de componentes y maneja el arranque de la
+ * aplicación. Registra información de versión y build al inicializar el
+ * contexto.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -30,15 +31,17 @@ public class Application {
 	/**
 	 * Punto de entrada principal de la aplicación.
 	 * 
-	 * @param args Argumentos de línea de comandos
+	 * @param args
+	 *            Argumentos de línea de comandos
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
 
 	/**
-	 * Registra información de arranque cuando el contexto se ha refrescado completamente.
-	 * Muestra versión del build y commit de git si están disponibles.
+	 * Registra información de arranque cuando el contexto se ha refrescado
+	 * completamente. Muestra versión del build y commit de git si están
+	 * disponibles.
 	 */
 	@EventListener(ContextRefreshedEvent.class)
 	public void logApplicationStartup() {

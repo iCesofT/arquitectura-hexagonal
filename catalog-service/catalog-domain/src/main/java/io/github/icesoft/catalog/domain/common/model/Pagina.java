@@ -4,17 +4,26 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Representa una página de resultados en el dominio para implementar paginación.
- * Encapsula los elementos de la página actual junto con metadatos de paginación.
+ * Representa una página de resultados en el dominio para implementar
+ * paginación. Encapsula los elementos de la página actual junto con metadatos
+ * de paginación.
  * 
- * @param <T> Tipo de elementos contenidos en la página
- * @param items Lista de elementos en la página actual
- * @param page Número de página actual (basado en 0)
- * @param size Tamaño de la página (cantidad de elementos por página)
- * @param totalItems Total de elementos disponibles en todas las páginas
+ * @param <T>
+ *            Tipo de elementos contenidos en la página
+ * @param items
+ *            Lista de elementos en la página actual
+ * @param page
+ *            Número de página actual (basado en 0)
+ * @param size
+ *            Tamaño de la página (cantidad de elementos por página)
+ * @param totalItems
+ *            Total de elementos disponibles en todas las páginas
  * 
- * @throws NullPointerException si items es nulo
- * @throws IllegalArgumentException si page es negativo, size es menor o igual a 0, o totalItems es negativo
+ * @throws NullPointerException
+ *             si items es nulo
+ * @throws IllegalArgumentException
+ *             si page es negativo, size es menor o igual a 0, o totalItems es
+ *             negativo
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

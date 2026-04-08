@@ -1,9 +1,9 @@
 package io.github.icesoft.catalog.domain.common.exception;
 
 /**
- * Excepción base para todas las excepciones del dominio.
- * Encapsula información de error estructurada con código de estado HTTP,
- * título y mensaje detallado para facilitar el manejo de errores.
+ * Excepción base para todas las excepciones del dominio. Encapsula información
+ * de error estructurada con código de estado HTTP, título y mensaje detallado
+ * para facilitar el manejo de errores.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -16,8 +16,10 @@ public class DomainException extends RuntimeException {
 	/**
 	 * Constructor para crear una excepción de dominio.
 	 * 
-	 * @param errorType Tipo de error que define status, título y formato de mensaje
-	 * @param args Argumentos para formatear el mensaje de detalle
+	 * @param errorType
+	 *            Tipo de error que define status, título y formato de mensaje
+	 * @param args
+	 *            Argumentos para formatear el mensaje de detalle
 	 */
 	public DomainException(ErrorType errorType, String[] args) {
 		super(errorType.getTitle());

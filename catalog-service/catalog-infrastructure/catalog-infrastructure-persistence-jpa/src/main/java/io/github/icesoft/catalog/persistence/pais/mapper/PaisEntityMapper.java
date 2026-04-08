@@ -7,13 +7,14 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
- * Mapper entre objetos de dominio País y entidades JPA PaisEntity.
- * Utiliza MapStruct para generar automáticamente las conversiones
- * bidireccionales entre la capa de dominio y la capa de persistencia.
+ * Mapper entre objetos de dominio País y entidades JPA PaisEntity. Utiliza
+ * MapStruct para generar automáticamente las conversiones bidireccionales entre
+ * la capa de dominio y la capa de persistencia.
  * 
- * <p>Mantiene la separación entre el modelo de dominio puro y
- * las entidades anotadas con JPA, permitiendo que cada capa evolucione
- * independientemente.</p>
+ * <p>
+ * Mantiene la separación entre el modelo de dominio puro y las entidades
+ * anotadas con JPA, permitiendo que cada capa evolucione independientemente.
+ * </p>
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

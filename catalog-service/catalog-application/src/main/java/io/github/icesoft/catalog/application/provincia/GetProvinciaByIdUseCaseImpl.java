@@ -22,7 +22,9 @@ public class GetProvinciaByIdUseCaseImpl implements GetProvinciaByIdUseCase {
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param provinciaDao Puerto de repositorio para operaciones de persistencia de provincias
+	 * @param provinciaDao
+	 *            Puerto de repositorio para operaciones de persistencia de
+	 *            provincias
 	 */
 	public GetProvinciaByIdUseCaseImpl(ProvinciaRepositoryPort provinciaDao) {
 		this.repository = provinciaDao;

@@ -8,9 +8,9 @@ import io.github.icesoft.catalog.domain.provincia.usecase.GetPaginatedProvincias
 import org.springframework.stereotype.Service;
 
 /**
- * Implementación del caso de uso para obtener provincias paginadas.
- * Coordina la consulta paginada con el puerto de repositorio para optimizar
- * el rendimiento en listados extensos.
+ * Implementación del caso de uso para obtener provincias paginadas. Coordina la
+ * consulta paginada con el puerto de repositorio para optimizar el rendimiento
+ * en listados extensos.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -23,7 +23,9 @@ public class GetPaginatedProvinciasUseCaseImpl implements GetPaginatedProvincias
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param provinciaDao Puerto de repositorio para operaciones de persistencia de provincias
+	 * @param provinciaDao
+	 *            Puerto de repositorio para operaciones de persistencia de
+	 *            provincias
 	 */
 	public GetPaginatedProvinciasUseCaseImpl(ProvinciaRepositoryPort provinciaDao) {
 		this.repository = provinciaDao;

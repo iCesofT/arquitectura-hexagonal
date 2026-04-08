@@ -6,12 +6,17 @@ import java.util.Objects;
  * Entidad de dominio que representa un Tipo de Vía según la normativa española.
  * Define los diferentes tipos de vías públicas y sus abreviaturas oficiales.
  * 
- * @param id Identificador único del tipo de vía
- * @param nombre Nombre completo del tipo de vía (ej: Calle, Avenida, Plaza)
- * @param abreviatura Abreviatura oficial del tipo de vía (ej: C/, Avda., Pl.)
+ * @param id
+ *            Identificador único del tipo de vía
+ * @param nombre
+ *            Nombre completo del tipo de vía (ej: Calle, Avenida, Plaza)
+ * @param abreviatura
+ *            Abreviatura oficial del tipo de vía (ej: C/, Avda., Pl.)
  * 
- * @throws NullPointerException si algún parámetro requerido es nulo
- * @throws IllegalArgumentException si algún campo está vacío
+ * @throws NullPointerException
+ *             si algún parámetro requerido es nulo
+ * @throws IllegalArgumentException
+ *             si algún campo está vacío
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

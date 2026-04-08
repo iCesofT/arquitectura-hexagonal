@@ -22,7 +22,8 @@ public class GetPaisByIdUseCaseImpl implements GetPaisByIdUseCase {
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param paisDao Puerto de repositorio para operaciones de persistencia de países
+	 * @param paisDao
+	 *            Puerto de repositorio para operaciones de persistencia de países
 	 */
 	public GetPaisByIdUseCaseImpl(PaisRepositoryPort paisDao) {
 		this.repository = paisDao;

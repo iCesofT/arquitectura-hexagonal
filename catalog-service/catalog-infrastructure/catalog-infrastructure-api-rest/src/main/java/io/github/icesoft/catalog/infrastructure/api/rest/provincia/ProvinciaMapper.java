@@ -9,9 +9,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
- * Mapper para transformaciones entre entidades de dominio Provincia y DTOs de la API REST.
- * Utiliza MapStruct para generar automáticamente las implementaciones de mapeo.
- * Incluye mapeo de la comunidad autónoma asociada a través de ComunidadAutonomaMapper.
+ * Mapper para transformaciones entre entidades de dominio Provincia y DTOs de
+ * la API REST. Utiliza MapStruct para generar automáticamente las
+ * implementaciones de mapeo. Incluye mapeo de la comunidad autónoma asociada a
+ * través de ComunidadAutonomaMapper.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

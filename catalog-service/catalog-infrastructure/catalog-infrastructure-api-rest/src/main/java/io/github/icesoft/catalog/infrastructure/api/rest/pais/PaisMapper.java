@@ -8,9 +8,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 
 /**
- * Mapper para transformaciones entre entidades de dominio Pais y DTOs de la API REST.
- * Utiliza MapStruct para generar automáticamente las implementaciones de mapeo.
- * Convierte entre el modelo de dominio y la representación JSON expuesta por la API.
+ * Mapper para transformaciones entre entidades de dominio Pais y DTOs de la API
+ * REST. Utiliza MapStruct para generar automáticamente las implementaciones de
+ * mapeo. Convierte entre el modelo de dominio y la representación JSON expuesta
+ * por la API.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0

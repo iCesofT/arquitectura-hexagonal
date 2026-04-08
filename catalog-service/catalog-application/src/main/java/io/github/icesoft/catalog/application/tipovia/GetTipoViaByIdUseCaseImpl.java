@@ -22,7 +22,9 @@ public class GetTipoViaByIdUseCaseImpl implements GetTipoViaByIdUseCase {
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param tipoViaDao Puerto de repositorio para operaciones de persistencia de tipos de vía
+	 * @param tipoViaDao
+	 *            Puerto de repositorio para operaciones de persistencia de tipos de
+	 *            vía
 	 */
 	public GetTipoViaByIdUseCaseImpl(TipoViaRepositoryPort tipoViaDao) {
 		this.repository = tipoViaDao;

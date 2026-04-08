@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Implementación del caso de uso para obtener comunidades autónomas paginadas.
- * Coordina la consulta paginada con el puerto de repositorio para optimizar
- * el rendimiento en listados extensos.
+ * Coordina la consulta paginada con el puerto de repositorio para optimizar el
+ * rendimiento en listados extensos.
  * 
  * @author Francisco Javier Ahijado &lt;icesoft@icesoft.blog&gt;
  * @since 1.0.0
@@ -23,7 +23,9 @@ public class GetPaginatedComunidadesAutonomasUseCaseImpl implements GetPaginated
 	/**
 	 * Constructor de la implementación del caso de uso.
 	 * 
-	 * @param comunidadAutonomaDao Puerto de repositorio para operaciones de persistencia de comunidades autónomas
+	 * @param comunidadAutonomaDao
+	 *            Puerto de repositorio para operaciones de persistencia de
+	 *            comunidades autónomas
 	 */
 	public GetPaginatedComunidadesAutonomasUseCaseImpl(ComunidadAutonomaRepositoryPort comunidadAutonomaDao) {
 		this.repository = comunidadAutonomaDao;

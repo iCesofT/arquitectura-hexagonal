@@ -346,7 +346,6 @@ Este proyecto está licenciado bajo **GNU General Public License v3.0** - ver ar
 - ✅ **Java 25** con Virtual Threads para máximo rendimiento
 - ✅ **Dual API** REST y gRPC funcionando simultáneamente  
 - ✅ **BDD Testing** con Cucumber para especificaciones vivientes
-- ✅ **Testcontainers** para testing de integración realista
 - ✅ **Cache Distribuido** con Redis para optimización
 - ✅ **Observabilidad** completa con Spring Actuator
 - ✅ **Docker Ready** para despliegue en cualquier entorno

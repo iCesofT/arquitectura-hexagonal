@@ -54,7 +54,6 @@
         <protobuf-java.version>4.34.1</protobuf-java.version>
         <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
         <swagger-annotations-v3.version>2.2.45</swagger-annotations-v3.version>
-        <testcontainers.version>1.21.0</testcontainers.version>
 
         <!-- Maven plugins -->
         <dependency-check-maven.version>9.0.7</dependency-check-maven.version>
